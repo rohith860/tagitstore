@@ -53,13 +53,12 @@ function App() {
         {/* Welcome Card */}
         <div className="mt-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl border border-white/20 p-10">
           <h1 className="text-5xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
-            Welcome back Rohith 👋
-          </h1>
+  Welcome to TAGITStore 🚀
+</h1>
 
           <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
-            Here's what's happening in your business today.
-          </p>
-
+  Smart Inventory & Business Management Dashboard
+</p>
           <div className="mt-8 flex flex-wrap gap-4">
             <button
   onClick={() => {
