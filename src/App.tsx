@@ -14,8 +14,32 @@ import NotificationsPanel from "./components/notifications/NotificationsPanel";
 import ProfileCard from "./components/profile/ProfileCard";
 import TeamMembers from "./components/team/TeamMembers";
 import InventoryStatus from "./components/inventory/InventoryStatus";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 function App() {
+  const generateReport = () => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(20);
+  doc.text("TAGITStore Dashboard Report", 20, 20);
+
+  doc.setFontSize(12);
+  doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 30);
+
+  autoTable(doc, {
+    startY: 40,
+    head: [["Metric", "Value"]],
+    body: [
+      ["Revenue", "$84,500"],
+      ["Orders", "1,284"],
+      ["Customers", "8,420"],
+      ["Products", "624"],
+    ],
+  });
+
+  doc.save("TAGITStore_Report.pdf");
+};
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Sidebar */}
@@ -37,16 +61,29 @@ function App() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <button className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-3 text-white font-semibold shadow-lg hover:scale-105 transition">
-              View Dashboard
-            </button>
+            <button
+  onClick={() => {
+    document.getElementById("dashboard-stats")?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }}
+  className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-3 text-white font-semibold shadow-lg hover:scale-105 transition"
+>
+  View Dashboard
+</button>
 
-            <button className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:scale-105 transition">
-              Generate Report
-            </button>
+            <button
+  onClick={generateReport}
+  className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-white font-semibold shadow-lg hover:scale-105 transition"
+>
+  Generate Report
+</button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-10">
+       <div
+  id="dashboard-stats"
+  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-10"
+>
   <StatCard
     title="Revenue"
     value="$84,500"
