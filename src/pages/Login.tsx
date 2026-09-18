@@ -55,12 +55,11 @@ export default function Login() {
 
   const [phoneModal, setPhoneModal] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [verificationCode, setVerificationCode] =
-    useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
-  const [phoneStep, setPhoneStep] = useState<
-    "phone" | "otp"
-  >("phone");
+  const [phoneStep, setPhoneStep] = useState<"phone" | "otp">(
+    "phone"
+  );
 
   const [phoneLoading, setPhoneLoading] = useState(false);
 
@@ -143,6 +142,18 @@ export default function Login() {
       case "auth/missing-phone-number":
         return "Please enter your phone number.";
 
+      case "auth/operation-not-allowed":
+        return "Phone authentication is not allowed for this region or provider.";
+
+      case "auth/billing-not-enabled":
+        return "Firebase billing is required for real SMS phone authentication.";
+
+      case "auth/invalid-app-credential":
+        return "Firebase phone verification could not validate this app.";
+
+      case "auth/unauthorized-domain":
+        return "This website domain is not authorized in Firebase.";
+
       default:
         return "Something went wrong. Please try again.";
     }
@@ -152,11 +163,9 @@ export default function Login() {
   // EMAIL LOGIN
   // ==================================================
 
-  const handleLogin = async (
-    event: {
-      preventDefault: () => void;
-    }
-  ) => {
+  const handleLogin = async (event: {
+    preventDefault: () => void;
+  }) => {
     event.preventDefault();
 
     setError("");
@@ -390,7 +399,7 @@ export default function Login() {
     try {
       setPhoneLoading(true);
 
-      // Clean old reCAPTCHA
+      // Remove previous reCAPTCHA instance
       if (recaptchaVerifierRef.current) {
         try {
           recaptchaVerifierRef.current.clear();
@@ -432,6 +441,7 @@ export default function Login() {
 
       setConfirmationResult(result);
       setPhoneStep("otp");
+
       setSuccess(
         "Verification code sent to your phone."
       );
@@ -500,14 +510,49 @@ export default function Login() {
     try {
       setPhoneLoading(true);
 
-      await confirmationResult.confirm(code);
+      // Confirm the OTP with Firebase
+      const result = await confirmationResult.confirm(
+        code
+      );
+
+      // Make sure Firebase returned a signed-in user
+      if (!result.user) {
+        setError(
+          "Phone verification completed, but sign-in failed."
+        );
+        return;
+      }
+
+      console.log(
+        "Phone login successful:",
+        result.user.uid
+      );
 
       setSuccess("Phone login successful!");
 
-      setTimeout(() => {
-        closePhoneLogin();
-        navigate("/");
-      }, 700);
+      // Clean up reCAPTCHA
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (recaptchaError) {
+          console.error(
+            "reCAPTCHA cleanup error:",
+            recaptchaError
+          );
+        }
+
+        recaptchaVerifierRef.current = null;
+      }
+
+      setPhoneModal(false);
+      setPhoneStep("phone");
+      setPhoneNumber("");
+      setVerificationCode("");
+      setConfirmationResult(null);
+
+      // Force the browser to load the dashboard route
+      // after Firebase authentication has completed.
+      window.location.replace("/");
     } catch (firebaseError) {
       console.error(
         "OTP verification error:",
@@ -534,7 +579,7 @@ export default function Login() {
   };
 
   // ==================================================
-  // RESET PHONE LOGIN
+  // CHANGE PHONE NUMBER
   // ==================================================
 
   const changePhoneNumber = () => {
@@ -565,10 +610,7 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950">
-      {/* ==================================================
-          BACKGROUND
-      ================================================== */}
-
+      {/* BACKGROUND */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
 
@@ -577,10 +619,7 @@ export default function Login() {
         <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
       </div>
 
-      {/* ==================================================
-          MAIN LOGIN
-      ================================================== */}
-
+      {/* MAIN LOGIN */}
       <div className="relative flex min-h-screen items-center justify-center px-4 py-8 sm:px-6">
         <div className="w-full max-w-md">
           {/* LOGO */}
@@ -605,7 +644,6 @@ export default function Login() {
 
           {/* LOGIN CARD */}
           <div className="rounded-3xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-black/30 backdrop-blur-2xl sm:p-7">
-            {/* HEADER */}
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-white">
                 Sign in
@@ -616,14 +654,14 @@ export default function Login() {
               </p>
             </div>
 
-            {/* ERROR MESSAGE */}
+            {/* ERROR */}
             {error && (
               <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-5 text-red-300">
                 {error}
               </div>
             )}
 
-            {/* SUCCESS MESSAGE */}
+            {/* SUCCESS */}
             {success && (
               <div className="mb-5 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm leading-5 text-emerald-300">
                 <CheckCircle2
@@ -635,7 +673,7 @@ export default function Login() {
               </div>
             )}
 
-            {/* LOGIN FORM */}
+            {/* EMAIL LOGIN FORM */}
             <form
               onSubmit={handleLogin}
               className="space-y-5"
@@ -838,10 +876,7 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ==================================================
-          PHONE LOGIN MODAL
-      ================================================== */}
-
+      {/* PHONE LOGIN MODAL */}
       {phoneModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl sm:p-7">
