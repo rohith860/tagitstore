@@ -12,8 +12,6 @@ interface Props {
   categories?: number;
 }
 
-
-
 export default function ProductStats({
   total = 0,
   inStock = 0,
@@ -48,26 +46,26 @@ export default function ProductStats({
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-8 sm:mb-10">
       {stats.map((item) => {
         const Icon = item.Icon;
 
         return (
           <div
             key={item.title}
-            className="bg-white rounded-3xl shadow-xl p-6 hover:scale-105 transition"
+            className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 hover:scale-[1.02] sm:hover:scale-105 transition-all duration-300"
           >
             <div
-              className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white bg-gradient-to-r ${item.color}`}
+              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-white bg-gradient-to-r ${item.color}`}
             >
-              <Icon size={28} />
+              <Icon size={26} />
             </div>
 
-            <h3 className="mt-5 text-slate-500 font-medium">
+            <h3 className="mt-4 sm:mt-5 text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium">
               {item.title}
             </h3>
 
-            <p className="text-3xl font-bold text-slate-800 mt-2">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mt-2">
               {item.value}
             </p>
           </div>
@@ -76,4 +74,3 @@ export default function ProductStats({
     </div>
   );
 }
-

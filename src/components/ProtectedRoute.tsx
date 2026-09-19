@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import { Navigate } from "react-router-dom";
+
 import {
   onAuthStateChanged,
   type User,
@@ -14,22 +19,48 @@ type Props = {
 export default function ProtectedRoute({
   children,
 }: Props) {
-  const [user, setUser] = useState<User | null>(null);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [user, setUser] =
+    useState<User | null>(null);
+
+  const [checkingAuth, setCheckingAuth] =
+    useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (currentUser) => {
-        setUser(currentUser);
-        setCheckingAuth(false);
-      }
+    console.log(
+      "🔐 Checking Firebase authentication..."
     );
 
-    return unsubscribe;
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        (currentUser) => {
+          console.log(
+            "🔥 Firebase auth state:",
+            currentUser
+          );
+
+          if (currentUser) {
+            console.log(
+              "✅ Authenticated user:",
+              currentUser.email ||
+                currentUser.phoneNumber ||
+                currentUser.uid
+            );
+          } else {
+            console.log(
+              "❌ No authenticated user"
+            );
+          }
+
+          setUser(currentUser);
+          setCheckingAuth(false);
+        }
+      );
+
+    return () => unsubscribe();
   }, []);
 
-  // Wait until Firebase finishes checking the session
+  // Loading
   if (checkingAuth) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950">
@@ -44,11 +75,24 @@ export default function ProtectedRoute({
     );
   }
 
-  // User is not authenticated
+  // Not logged in
   if (!user) {
-    return <Navigate to="/login" replace />;
+    console.log(
+      "🚫 No user → redirecting to login"
+    );
+
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
 
-  // User is authenticated
+  // Logged in
+  console.log(
+    "🚀 User authenticated → Dashboard"
+  );
+
   return <>{children}</>;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Search,
@@ -8,258 +8,1853 @@ import {
   DollarSign,
   Star,
   Trash2,
+  Users,
+  Crown,
+  UserPlus,
+  UserCheck,
+  Eye,
+  X,
+  Filter,
+  Pencil,
+  Save,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 
-const initialCustomers = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john@gmail.com",
-    phone: "+1 9876543210",
-    orders: 24,
-    spent: "$5,490",
-    status: "Premium",
-    image: "https://randomuser.me/api/portraits/men/32.jpg",
-  },
-  {
-    id: 2,
-    name: "Emily Johnson",
-    email: "emily@gmail.com",
-    phone: "+1 9876543211",
-    orders: 12,
-    spent: "$2,180",
-    status: "Regular",
-    image: "https://randomuser.me/api/portraits/women/44.jpg",
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    email: "michael@gmail.com",
-    phone: "+1 9876543212",
-    orders: 38,
-    spent: "$9,420",
-    status: "Premium",
-    image: "https://randomuser.me/api/portraits/men/12.jpg",
-  },
-  {
-    id: 4,
-    name: "Sophia Wilson",
-    email: "sophia@gmail.com",
-    phone: "+1 9876543213",
-    orders: 8,
-    spent: "$1,120",
-    status: "New",
-    image: "https://randomuser.me/api/portraits/women/68.jpg",
-  },
-  {
-    id: 5,
-    name: "David Miller",
-    email: "david@gmail.com",
-    phone: "+1 9876543214",
-    orders: 19,
-    spent: "$4,250",
-    status: "Regular",
-    image: "https://randomuser.me/api/portraits/men/56.jpg",
-  },
-  {
-    id: 6,
-    name: "Olivia Taylor",
-    email: "olivia@gmail.com",
-    phone: "+1 9876543215",
-    orders: 42,
-    spent: "$12,350",
-    status: "Premium",
-    image: "https://randomuser.me/api/portraits/women/90.jpg",
-  },
-];
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+
+import toast from "react-hot-toast";
+
+interface Customer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  orders: number;
+  spent: string;
+  status: "Premium" | "Regular" | "New";
+  image: string;
+  firebaseId?: string;
+}
+
+const emptyForm = {
+  name: "",
+  email: "",
+  phone: "",
+  orders: "0",
+  spent: "",
+  status: "New" as Customer["status"],
+  image: "",
+};
+
+const DEFAULT_IMAGE =
+  "https://randomuser.me/api/portraits/lego/1.jpg";
 
 export default function Customers() {
-
-    const [customers, setCustomers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const [search, setSearch] = useState("");
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState("All");
 
-  const filteredCustomers = customers.filter((customer) =>
-  customer.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<Customer | null>(null);
 
-    const handleDelete = (id:number)=>{
+  const [showCustomerModal, setShowCustomerModal] =
+    useState(false);
 
-    const confirmDelete =
-      window.confirm(
-        "Delete this customer?"
+  const [editingCustomer, setEditingCustomer] =
+    useState<Customer | null>(null);
+
+  const [deleteCustomer, setDeleteCustomer] =
+    useState<Customer | null>(null);
+
+  const [formData, setFormData] = useState(emptyForm);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // =========================================================
+  // LOAD CUSTOMERS
+  // =========================================================
+
+  const loadCustomers = async (showToast = false) => {
+    try {
+      setLoading(true);
+
+      const snapshot = await getDocs(
+        collection(db, "customers")
       );
 
+      const firebaseCustomers: Customer[] =
+        snapshot.docs.map((customerDoc, index) => {
+          const data = customerDoc.data();
 
-    if(confirmDelete){
+          return {
+            id:
+              typeof data.id === "number"
+                ? data.id
+                : index + 1,
 
-      setCustomers(
-        customers.filter(
-          (customer)=>customer.id !== id
-        )
+            name: data.name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+
+            orders:
+              typeof data.orders === "number"
+                ? data.orders
+                : Number(data.orders) || 0,
+
+            spent: data.spent || "",
+
+            status:
+              data.status === "Premium" ||
+              data.status === "Regular" ||
+              data.status === "New"
+                ? data.status
+                : "New",
+
+            image:
+              typeof data.image === "string" &&
+              data.image.trim()
+                ? data.image
+                : DEFAULT_IMAGE,
+
+            firebaseId: customerDoc.id,
+          };
+        });
+
+      setCustomers(firebaseCustomers);
+
+      if (showToast) {
+        toast.success("Customers refreshed");
+      }
+    } catch (error) {
+      console.error(
+        "Error loading customers:",
+        error
       );
 
+      toast.error(
+        "Failed to load customers"
+      );
+    } finally {
+      setLoading(false);
     }
-
   };
 
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  // =========================================================
+  // ESCAPE + BODY SCROLL
+  // =========================================================
+
+  useEffect(() => {
+    const handleEscape = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key !== "Escape") return;
+
+      setSelectedCustomer(null);
+      setShowCustomerModal(false);
+      setDeleteCustomer(null);
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+    if (
+      showCustomerModal ||
+      selectedCustomer ||
+      deleteCustomer
+    ) {
+      document.body.style.overflow =
+        "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+
+      document.body.style.overflow = "";
+    };
+  }, [
+    showCustomerModal,
+    selectedCustomer,
+    deleteCustomer,
+  ]);
+
+  // =========================================================
+  // FILTER
+  // =========================================================
+
+  const filteredCustomers = useMemo(() => {
+    const searchValue =
+      search.trim().toLowerCase();
+
+    return customers.filter((customer) => {
+      const matchesSearch =
+        !searchValue ||
+        customer.name
+          .toLowerCase()
+          .includes(searchValue) ||
+        customer.email
+          .toLowerCase()
+          .includes(searchValue) ||
+        customer.phone
+          .toLowerCase()
+          .includes(searchValue);
+
+      const matchesStatus =
+        statusFilter === "All" ||
+        customer.status === statusFilter;
+
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
+    });
+  }, [
+    customers,
+    search,
+    statusFilter,
+  ]);
+
+  // =========================================================
+  // STATS
+  // =========================================================
+
+  const totalCustomers =
+    customers.length;
+
+  const premiumCustomers =
+    customers.filter(
+      (customer) =>
+        customer.status === "Premium"
+    ).length;
+
+  const regularCustomers =
+    customers.filter(
+      (customer) =>
+        customer.status === "Regular"
+    ).length;
+
+  const newCustomers =
+    customers.filter(
+      (customer) =>
+        customer.status === "New"
+    ).length;
+
+  const totalOrders =
+    customers.reduce(
+      (total, customer) =>
+        total + customer.orders,
+      0
+    );
+
+  // =========================================================
+  // STATUS STYLE
+  // =========================================================
+
+  const getStatusStyle = (
+    status: string
+  ) => {
+    switch (status) {
+      case "Premium":
+        return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
+
+      case "Regular":
+        return "bg-blue-500/10 text-blue-400 border border-blue-500/20";
+
+      case "New":
+        return "bg-green-500/10 text-green-400 border border-green-500/20";
+
+      default:
+        return "bg-slate-800 text-slate-400 border border-slate-700";
+    }
+  };
+
+  // =========================================================
+  // ADD
+  // =========================================================
+
+  const handleAddCustomer = () => {
+    setEditingCustomer(null);
+    setFormData({ ...emptyForm });
+    setShowCustomerModal(true);
+  };
+
+  // =========================================================
+  // EDIT
+  // =========================================================
+
+  const handleEditCustomer = (
+    customer: Customer
+  ) => {
+    setSelectedCustomer(null);
+
+    setEditingCustomer(customer);
+
+    setFormData({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      orders: String(customer.orders),
+      spent: customer.spent,
+      status: customer.status,
+      image: customer.image,
+    });
+
+    setShowCustomerModal(true);
+  };
+
+  // =========================================================
+  // INPUT CHANGE
+  // =========================================================
+
+  const handleInputChange = (
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } =
+      event.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  // =========================================================
+  // VALIDATE
+  // =========================================================
+
+  const validateForm = () => {
+    const name =
+      formData.name.trim();
+
+    const email =
+      formData.email.trim();
+
+    const phone =
+      formData.phone.trim();
+
+    const spent =
+      formData.spent.trim();
+
+    const orders =
+      Number(formData.orders);
+
+    if (!name) {
+      toast.error(
+        "Customer name is required"
+      );
+      return false;
+    }
+
+    if (!email) {
+      toast.error(
+        "Email address is required"
+      );
+      return false;
+    }
+
+    if (!email.includes("@")) {
+      toast.error(
+        "Enter a valid email address"
+      );
+      return false;
+    }
+
+    if (!phone) {
+      toast.error(
+        "Phone number is required"
+      );
+      return false;
+    }
+
+    if (!spent) {
+      toast.error(
+        "Total spent is required"
+      );
+      return false;
+    }
+
+    if (
+      Number.isNaN(orders) ||
+      orders < 0 ||
+      !Number.isInteger(orders)
+    ) {
+      toast.error(
+        "Orders must be a valid whole number"
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  // =========================================================
+  // SAVE
+  // =========================================================
+
+  const handleSaveCustomer =
+    async () => {
+      if (saving) return;
+
+      if (!validateForm()) return;
+
+      const name =
+        formData.name.trim();
+
+      const email =
+        formData.email.trim();
+
+      const phone =
+        formData.phone.trim();
+
+      const spent =
+        formData.spent.trim();
+
+      const image =
+        formData.image.trim();
+
+      const orders =
+        Number(formData.orders);
+
+      try {
+        setSaving(true);
+
+        // ===================================================
+        // EDIT
+        // ===================================================
+
+        if (editingCustomer) {
+          if (
+            !editingCustomer.firebaseId
+          ) {
+            toast.error(
+              "Firebase ID is missing"
+            );
+            return;
+          }
+
+          const customerRef = doc(
+            db,
+            "customers",
+            editingCustomer.firebaseId
+          );
+
+          const updatedData = {
+            name,
+            email,
+            phone,
+            orders,
+            spent,
+            status: formData.status,
+            image:
+              image || DEFAULT_IMAGE,
+          };
+
+          await updateDoc(
+            customerRef,
+            updatedData
+          );
+
+          setCustomers(
+            (previousCustomers) =>
+              previousCustomers.map(
+                (customer) =>
+                  customer.id ===
+                  editingCustomer.id
+                    ? {
+                        ...customer,
+                        ...updatedData,
+                      }
+                    : customer
+              )
+          );
+
+          toast.success(
+            "Customer updated successfully"
+          );
+        }
+
+        // ===================================================
+        // ADD
+        // ===================================================
+
+        else {
+          const newId =
+            customers.length > 0
+              ? Math.max(
+                  ...customers.map(
+                    (customer) =>
+                      customer.id
+                  )
+                ) + 1
+              : 1;
+
+          const newCustomerData = {
+            id: newId,
+            name,
+            email,
+            phone,
+            orders,
+            spent,
+            status:
+              formData.status,
+            image:
+              image || DEFAULT_IMAGE,
+          };
+
+          const customerRef =
+            await addDoc(
+              collection(
+                db,
+                "customers"
+              ),
+              newCustomerData
+            );
+
+          const newCustomer: Customer =
+            {
+              ...newCustomerData,
+              firebaseId:
+                customerRef.id,
+            };
+
+          setCustomers(
+            (previousCustomers) => [
+              ...previousCustomers,
+              newCustomer,
+            ]
+          );
+
+          toast.success(
+            "Customer added successfully"
+          );
+        }
+
+        setShowCustomerModal(false);
+        setEditingCustomer(null);
+        setFormData({
+          ...emptyForm,
+        });
+      } catch (error) {
+        console.error(
+          "Error saving customer:",
+          error
+        );
+
+        toast.error(
+          "Failed to save customer"
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
+
+  // =========================================================
+  // OPEN DELETE CONFIRMATION
+  // =========================================================
+
+  const handleDeleteClick = (
+    customer: Customer
+  ) => {
+    setDeleteCustomer(customer);
+  };
+
+  // =========================================================
+  // CONFIRM DELETE
+  // =========================================================
+
+  const confirmDelete = async () => {
+    if (
+      deleting ||
+      !deleteCustomer
+    ) {
+      return;
+    }
+
+    if (!deleteCustomer.firebaseId) {
+      toast.error(
+        "Firebase ID is missing"
+      );
+      return;
+    }
+
+    try {
+      setDeleting(true);
+
+      const customerRef = doc(
+        db,
+        "customers",
+        deleteCustomer.firebaseId
+      );
+
+      await deleteDoc(customerRef);
+
+      setCustomers(
+        (previousCustomers) =>
+          previousCustomers.filter(
+            (customer) =>
+              customer.id !==
+              deleteCustomer.id
+          )
+      );
+
+      if (
+        selectedCustomer?.id ===
+        deleteCustomer.id
+      ) {
+        setSelectedCustomer(null);
+      }
+
+      toast.success(
+        "Customer deleted successfully"
+      );
+
+      setDeleteCustomer(null);
+    } catch (error) {
+      console.error(
+        "Error deleting customer:",
+        error
+      );
+
+      toast.error(
+        "Failed to delete customer"
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // =========================================================
+  // CLEAR FILTERS
+  // =========================================================
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("All");
+  };
+
+  // =========================================================
+  // IMAGE FALLBACK
+  // =========================================================
+
+  const handleImageError = (
+    event: React.SyntheticEvent<
+      HTMLImageElement,
+      Event
+    >
+  ) => {
+    const image =
+      event.currentTarget;
+
+    if (
+      image.src !== DEFAULT_IMAGE
+    ) {
+      image.src = DEFAULT_IMAGE;
+    }
+  };
+
+  // =========================================================
+  // CLOSE FORM
+  // =========================================================
+
+  const closeCustomerModal = () => {
+    if (saving) return;
+
+    setShowCustomerModal(false);
+    setEditingCustomer(null);
+    setFormData({
+      ...emptyForm,
+    });
+  };
+
+  // =========================================================
+  // STYLES
+  // =========================================================
+
+  const inputClass =
+    "w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+
+  const labelClass =
+    "mb-2 block text-sm font-medium text-slate-300";
+
+  // =========================================================
+  // UI
+  // =========================================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-50 p-8">
-      <h1 className="text-4xl font-bold text-slate-800">
-        Customers
-      </h1>
+    <div className="min-h-screen bg-slate-950 p-4 text-white sm:p-6">
 
-      <p className="text-slate-500 mt-2 mb-8">
-        Manage your customers efficiently.
-      </p>
+      <div className="mx-auto w-full max-w-[1600px] space-y-6">
 
-      <div className="relative mb-10">
-        <Search
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          size={20}
-        />
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
-        <input
-          type="text"
-          placeholder="Search Customer..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white rounded-2xl shadow-md border pl-12 py-4 outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-      </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {filteredCustomers.map((customer) => (
-          <div
-            key={customer.id}
-            className="bg-white rounded-3xl shadow-xl p-6 hover:scale-105 transition"
-          >
-            <div className="flex items-center gap-4">
-              <img
-                src={customer.image}
-                alt={customer.name}
-                className="w-20 h-20 rounded-full object-cover"
-              />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Customers
+            </h1>
 
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {customer.name}
-                </h2>
-
-                <span
-                  className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold ${
-                    customer.status === "Premium"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : customer.status === "Regular"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-green-100 text-green-700"
-                  }`}
-                >
-                  {customer.status}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center gap-3">
-                <Mail className="text-indigo-600" size={18} />
-                <span>{customer.email}</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Phone className="text-green-600" size={18} />
-                <span>{customer.phone}</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <ShoppingBag className="text-purple-600" size={18} />
-                <span>{customer.orders} Orders</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <DollarSign className="text-orange-600" size={18} />
-                <span>{customer.spent}</span>
-              </div>
-            </div>
-              <div className="flex gap-3 mt-6">
-
-<button
-onClick={() => setSelectedCustomer(customer)}
-className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl flex justify-center items-center gap-2"
->
-  <Star size={18}/>
-  Profile
-</button>
-
-
-<button
-className="bg-red-500 hover:bg-red-600 text-white px-5 rounded-xl"
-onClick={()=>handleDelete(customer.id)}
->
-<Trash2 size={18}/>
-</button>
-
-
-</div>
-            
+            <p className="mt-1 text-sm text-slate-400">
+              Manage and understand your customer base
+            </p>
           </div>
-        ))}
-      </div>
-      
-      {selectedCustomer && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-
-            <h2 className="text-2xl font-bold mb-6">
-              Customer Profile
-            </h2>
-
-
-            <div className="space-y-3 text-slate-600">
-
-              <p>
-                <b>Name:</b> {selectedCustomer.name}
-              </p>
-
-              <p>
-                <b>Email:</b> {selectedCustomer.email}
-              </p>
-
-              <p>
-                <b>Phone:</b> {selectedCustomer.phone}
-              </p>
-
-              <p>
-                <b>Orders:</b> {selectedCustomer.orders}
-              </p>
-
-              <p>
-                <b>Spent:</b> {selectedCustomer.spent}
-              </p>
-
-              <p>
-                <b>Status:</b> {selectedCustomer.status}
-              </p>
-
-            </div>
-
+          <div className="flex flex-col gap-2 sm:flex-row">
 
             <button
-              onClick={() => setSelectedCustomer(null)}
-              className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-xl"
+              type="button"
+              onClick={() =>
+                loadCustomers(true)
+              }
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Close
+              <RefreshCw
+                size={17}
+                className={
+                  loading
+                    ? "animate-spin"
+                    : ""
+                }
+              />
+
+              Refresh
             </button>
 
+            <button
+              type="button"
+              onClick={
+                handleAddCustomer
+              }
+              disabled={saving}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <UserPlus size={18} />
+              Add Customer
+            </button>
+
+          </div>
+        </div>
+
+        {/* =================================================
+            STATS
+        ================================================= */}
+
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+
+              <div>
+                <p className="text-xs text-slate-400">
+                  Total Customers
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {totalCustomers}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-400">
+                <Users size={20} />
+              </div>
+
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+
+              <div>
+                <p className="text-xs text-slate-400">
+                  Premium
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {premiumCustomers}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-yellow-500/10 p-3 text-yellow-400">
+                <Crown size={20} />
+              </div>
+
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+
+              <div>
+                <p className="text-xs text-slate-400">
+                  Regular
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {regularCustomers}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-400">
+                <UserCheck size={20} />
+              </div>
+
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+
+              <div>
+                <p className="text-xs text-slate-400">
+                  New Customers
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {newCustomers}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-green-500/10 p-3 text-green-400">
+                <UserPlus size={20} />
+              </div>
+
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+
+              <div>
+                <p className="text-xs text-slate-400">
+                  Customer Orders
+                </p>
+
+                <p className="mt-2 text-2xl font-bold text-white">
+                  {totalOrders}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-purple-500/10 p-3 text-purple-400">
+                <ShoppingBag size={20} />
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        {/* =================================================
+            SEARCH + FILTER
+        ================================================= */}
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+
+          <div className="relative flex-1">
+
+            <Search
+              size={19}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+            />
+
+            <input
+              type="text"
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Search customers, email, phone..."
+              className={`${inputClass} pl-11`}
+            />
+
+          </div>
+
+          <div className="relative sm:w-60">
+
+            <Filter
+              size={17}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+            />
+
+            <select
+              value={statusFilter}
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value
+                )
+              }
+              className={`${inputClass} cursor-pointer pl-10`}
+            >
+              <option value="All">
+                All Customer Categories
+              </option>
+
+              <option value="Premium">
+                Premium
+              </option>
+
+              <option value="Regular">
+                Regular
+              </option>
+
+              <option value="New">
+                New
+              </option>
+            </select>
 
           </div>
 
         </div>
-      )}
 
+        {/* =================================================
+            RESULT COUNT
+        ================================================= */}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+          <p className="text-sm text-slate-500">
+            Showing{" "}
+            <span className="font-semibold text-slate-300">
+              {filteredCustomers.length}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-300">
+              {customers.length}
+            </span>{" "}
+            customers
+          </p>
+
+          {(search ||
+            statusFilter !== "All") && (
+            <button
+              type="button"
+              onClick={
+                clearFilters
+              }
+              className="text-sm font-medium text-blue-400 hover:text-blue-300"
+            >
+              Clear filters
+            </button>
+          )}
+
+        </div>
+
+        {/* =================================================
+            LOADING
+        ================================================= */}
+
+        {loading ? (
+
+          <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900">
+
+            <Loader2
+              size={38}
+              className="animate-spin text-blue-500"
+            />
+
+            <p className="mt-4 text-sm text-slate-400">
+              Loading customers...
+            </p>
+
+          </div>
+
+        ) : filteredCustomers.length > 0 ? (
+
+          /* =================================================
+              CARDS
+          ================================================= */
+
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+
+            {filteredCustomers.map(
+              (customer) => (
+
+                <div
+                  key={
+                    customer.firebaseId ||
+                    customer.id
+                  }
+                  className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg transition duration-300 hover:-translate-y-1 hover:border-slate-700 hover:shadow-xl"
+                >
+
+                  {/* HEADER */}
+
+                  <div className="flex items-start justify-between gap-3">
+
+                    <div className="flex min-w-0 items-center gap-4">
+
+                      <img
+                        src={
+                          customer.image
+                        }
+                        alt={
+                          customer.name
+                        }
+                        onError={
+                          handleImageError
+                        }
+                        className="h-16 w-16 shrink-0 rounded-full border-2 border-slate-700 object-cover"
+                      />
+
+                      <div className="min-w-0">
+
+                        <h2 className="truncate text-lg font-bold text-white">
+                          {
+                            customer.name
+                          }
+                        </h2>
+
+                        <span
+                          className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusStyle(
+                            customer.status
+                          )}`}
+                        >
+                          {
+                            customer.status
+                          }
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                    <span className="text-xs text-slate-600">
+                      #
+                      {String(
+                        customer.id
+                      ).padStart(
+                        3,
+                        "0"
+                      )}
+                    </span>
+
+                  </div>
+
+                  <div className="my-5 border-t border-slate-800" />
+
+                  {/* DETAILS */}
+
+                  <div className="space-y-3">
+
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-indigo-500/10 p-2 text-indigo-400">
+                        <Mail size={16} />
+                      </div>
+
+                      <span className="truncate text-sm text-slate-400">
+                        {
+                          customer.email
+                        }
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-green-500/10 p-2 text-green-400">
+                        <Phone size={16} />
+                      </div>
+
+                      <span className="text-sm text-slate-400">
+                        {
+                          customer.phone
+                        }
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-purple-500/10 p-2 text-purple-400">
+                        <ShoppingBag size={16} />
+                      </div>
+
+                      <span className="text-sm text-slate-400">
+                        {
+                          customer.orders
+                        }{" "}
+                        Orders
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-orange-500/10 p-2 text-orange-400">
+                        <DollarSign size={16} />
+                      </div>
+
+                      <span className="text-sm font-semibold text-slate-300">
+                        {
+                          customer.spent
+                        }
+                      </span>
+                    </div>
+
+                  </div>
+
+                  {/* ACTIONS */}
+
+                  <div className="mt-5 grid grid-cols-[1fr_auto_auto] gap-2 border-t border-slate-800 pt-5">
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedCustomer(
+                          customer
+                        )
+                      }
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+                    >
+                      <Eye size={17} />
+                      View
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleEditCustomer(
+                          customer
+                        )
+                      }
+                      disabled={
+                        saving ||
+                        deleting
+                      }
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-blue-400 transition hover:border-blue-500/40 hover:bg-blue-500/10 disabled:opacity-50"
+                    >
+                      <Pencil size={18} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDeleteClick(
+                          customer
+                        )
+                      }
+                      disabled={
+                        saving ||
+                        deleting
+                      }
+                      className="inline-flex items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5 text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+
+                  </div>
+
+                </div>
+              )
+            )}
+
+          </div>
+
+        ) : (
+
+          /* EMPTY */
+
+          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900 px-6 py-14 text-center">
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 text-slate-400">
+              <Users size={26} />
+            </div>
+
+            <h3 className="mt-4 text-base font-semibold text-white">
+              No customers found
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500">
+              {customers.length === 0
+                ? "Your Firebase customers collection is empty."
+                : "Try changing your search or customer category."}
+            </p>
+
+            {customers.length ===
+            0 ? (
+              <button
+                type="button"
+                onClick={
+                  handleAddCustomer
+                }
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+              >
+                <UserPlus
+                  size={17}
+                />
+                Add First Customer
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={
+                  clearFilters
+                }
+                className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+              >
+                Clear Filters
+              </button>
+            )}
+
+          </div>
+        )}
+
+        {/* =================================================
+            VIEW PROFILE MODAL
+        ================================================= */}
+
+        {selectedCustomer && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                setSelectedCustomer(
+                  null
+                );
+              }
+            }}
+          >
+
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+
+              <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    Customer Profile
+                  </h2>
+
+                  <p className="text-sm text-slate-500">
+                    Customer details
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedCustomer(
+                      null
+                    )
+                  }
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+                >
+                  <X size={20} />
+                </button>
+
+              </div>
+
+              <div className="p-5">
+
+                <div className="flex flex-col items-center text-center">
+
+                  <img
+                    src={
+                      selectedCustomer.image
+                    }
+                    alt={
+                      selectedCustomer.name
+                    }
+                    onError={
+                      handleImageError
+                    }
+                    className="h-24 w-24 rounded-full border-4 border-slate-700 object-cover"
+                  />
+
+                  <h3 className="mt-4 text-xl font-bold text-white">
+                    {
+                      selectedCustomer.name
+                    }
+                  </h3>
+
+                  <span
+                    className={`mt-2 rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
+                      selectedCustomer.status
+                    )}`}
+                  >
+                    {
+                      selectedCustomer.status
+                    }
+                  </span>
+
+                </div>
+
+                <div className="mt-6 space-y-3">
+
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                      <Mail
+                        size={17}
+                        className="text-indigo-400"
+                      />
+                      Email
+                    </span>
+
+                    <span className="max-w-[190px] truncate text-sm text-slate-200">
+                      {
+                        selectedCustomer.email
+                      }
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                      <Phone
+                        size={17}
+                        className="text-green-400"
+                      />
+                      Phone
+                    </span>
+
+                    <span className="text-sm text-slate-200">
+                      {
+                        selectedCustomer.phone
+                      }
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                      <ShoppingBag
+                        size={17}
+                        className="text-purple-400"
+                      />
+                      Orders
+                    </span>
+
+                    <span className="font-semibold text-slate-200">
+                      {
+                        selectedCustomer.orders
+                      }
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                      <DollarSign
+                        size={17}
+                        className="text-orange-400"
+                      />
+                      Total Spent
+                    </span>
+
+                    <span className="font-semibold text-white">
+                      {
+                        selectedCustomer.spent
+                      }
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                      <Star
+                        size={17}
+                        className="text-yellow-400"
+                      />
+                      Category
+                    </span>
+
+                    <span className="font-semibold text-white">
+                      {
+                        selectedCustomer.status
+                      }
+                    </span>
+                  </div>
+
+                </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleEditCustomer(
+                        selectedCustomer
+                      )
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500"
+                  >
+                    <Pencil size={17} />
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDeleteClick(
+                        selectedCustomer
+                      )
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/10"
+                  >
+                    <Trash2 size={17} />
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+
+              <div className="border-t border-slate-800 p-5">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedCustomer(
+                      null
+                    )
+                  }
+                  className="w-full rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800"
+                >
+                  Close
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* =================================================
+            ADD / EDIT MODAL
+        ================================================= */}
+
+        {showCustomerModal && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                closeCustomerModal();
+              }
+            }}
+          >
+
+            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+
+              <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4 sm:px-6">
+
+                <div>
+                  <h2 className="text-lg font-bold text-white sm:text-xl">
+                    {editingCustomer
+                      ? "Edit Customer"
+                      : "Add Customer"}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    {editingCustomer
+                      ? "Update customer information"
+                      : "Create a new customer profile"}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={
+                    closeCustomerModal
+                  }
+                  disabled={saving}
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-50"
+                >
+                  <X size={20} />
+                </button>
+
+              </div>
+
+              <div className="p-5 sm:p-6">
+
+                <div className="grid gap-5 md:grid-cols-2">
+
+                  <div>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Customer Name
+                    </label>
+
+                    <input
+                      type="text"
+                      name="name"
+                      value={
+                        formData.name
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                      placeholder="Enter customer name"
+                      className={
+                        inputClass
+                      }
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Email Address
+                    </label>
+
+                    <input
+                      type="email"
+                      name="email"
+                      value={
+                        formData.email
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                      placeholder="customer@gmail.com"
+                      className={
+                        inputClass
+                      }
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Phone Number
+                    </label>
+
+                    <input
+                      type="text"
+                      name="phone"
+                      value={
+                        formData.phone
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                      placeholder="+1 9876543210"
+                      className={
+                        inputClass
+                      }
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Number of Orders
+                    </label>
+
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      name="orders"
+                      value={
+                        formData.orders
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                      placeholder="0"
+                      className={
+                        inputClass
+                      }
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Total Spent
+                    </label>
+
+                    <input
+                      type="text"
+                      name="spent"
+                      value={
+                        formData.spent
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                      placeholder="$2,500"
+                      className={
+                        inputClass
+                      }
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Customer Category
+                    </label>
+
+                    <select
+                      name="status"
+                      value={
+                        formData.status
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                      className={`${inputClass} cursor-pointer`}
+                      disabled={saving}
+                    >
+                      <option value="New">
+                        New
+                      </option>
+
+                      <option value="Regular">
+                        Regular
+                      </option>
+
+                      <option value="Premium">
+                        Premium
+                      </option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+
+                    <label
+                      className={
+                        labelClass
+                      }
+                    >
+                      Profile Image URL
+                    </label>
+
+                    <input
+                      type="text"
+                      name="image"
+                      value={
+                        formData.image
+                      }
+                      onChange={
+                        handleInputChange
+                      }
+                      placeholder="https://example.com/image.jpg"
+                      className={
+                        inputClass
+                      }
+                      disabled={saving}
+                    />
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      Leave empty to use the default profile image.
+                    </p>
+
+                  </div>
+
+                </div>
+
+                {formData.image.trim() && (
+                  <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+
+                    <p className="mb-3 text-sm font-medium text-slate-400">
+                      Image Preview
+                    </p>
+
+                    <img
+                      src={
+                        formData.image
+                      }
+                      alt="Preview"
+                      onError={
+                        handleImageError
+                      }
+                      className="h-24 w-24 rounded-full border-2 border-slate-700 object-cover"
+                    />
+
+                  </div>
+                )}
+
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-800 p-5 sm:flex-row sm:justify-end sm:px-6">
+
+                <button
+                  type="button"
+                  onClick={
+                    closeCustomerModal
+                  }
+                  disabled={saving}
+                  className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleSaveCustomer
+                  }
+                  disabled={saving}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2
+                        size={17}
+                        className="animate-spin"
+                      />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={17} />
+
+                      {editingCustomer
+                        ? "Save Changes"
+                        : "Add Customer"}
+                    </>
+                  )}
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* =================================================
+            DELETE CONFIRMATION MODAL
+        ================================================= */}
+
+        {deleteCustomer && (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                setDeleteCustomer(
+                  null
+                );
+              }
+            }}
+          >
+
+            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+
+              <div className="flex items-start gap-4">
+
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                  <AlertTriangle
+                    size={24}
+                  />
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    Delete Customer?
+                  </h2>
+
+                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                    Are you sure you want to delete{" "}
+                    <span className="font-semibold text-white">
+                      {
+                        deleteCustomer.name
+                      }
+                    </span>
+                    ? This action cannot be undone.
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDeleteCustomer(
+                      null
+                    )
+                  }
+                  disabled={deleting}
+                  className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    confirmDelete
+                  }
+                  disabled={deleting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2
+                        size={17}
+                        className="animate-spin"
+                      />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={17} />
+                      Delete Customer
+                    </>
+                  )}
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

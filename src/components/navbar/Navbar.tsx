@@ -1,157 +1,928 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Bell,
+  ChevronDown,
+  Search,
+  X,
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  BarChart3,
+  Settings,
+  User,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Search, UserCircle } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
-const Navbar = () => {
+type NavbarProps = {
+  setMobileSidebarOpen: (open: boolean) => void;
+  sidebarCollapsed: boolean;
+};
+
+interface ProfileData {
+  name: string;
+  email: string;
+  image: string;
+}
+
+interface SearchItem {
+  title: string;
+  description: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+}
+
+const PROFILE_STORAGE_KEY = "tagit_profile";
+
+const PROFILE_UPDATED_EVENT =
+  "tagit-profile-updated";
+
+const searchItems: SearchItem[] = [
+  {
+    title: "Dashboard",
+    description: "Store overview and business statistics",
+    path: "/",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Products",
+    description: "Manage products and inventory",
+    path: "/products",
+    icon: Package,
+  },
+  {
+    title: "Orders",
+    description: "Manage customer orders",
+    path: "/orders",
+    icon: ShoppingCart,
+  },
+  {
+    title: "Customers",
+    description: "Manage customers and profiles",
+    path: "/customers",
+    icon: Users,
+  },
+  {
+    title: "Analytics",
+    description: "View business performance",
+    path: "/analytics",
+    icon: BarChart3,
+  },
+  {
+    title: "Settings",
+    description: "Manage application settings",
+    path: "/settings",
+    icon: Settings,
+  },
+  {
+    title: "Profile",
+    description: "Manage your administrator profile",
+    path: "/profile",
+    icon: User,
+  },
+];
+
+export default function Navbar({
+  setMobileSidebarOpen,
+  sidebarCollapsed,
+}: NavbarProps) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
-  const today = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const searchContainerRef =
+    useRef<HTMLDivElement>(null);
 
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
+  const searchInputRef =
+    useRef<HTMLInputElement>(null);
 
-  const notificationRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
+  const [searchOpen, setSearchOpen] =
+    useState(false);
+
+  const [notificationsOpen, setNotificationsOpen] =
+    useState(false);
+
+  const [profile, setProfile] =
+    useState<ProfileData>({
+      name: "Rohith.S",
+      email: "rohithbecsc@gmail.com",
+      image: "",
+    });
+
+  /* =====================================================
+     LOAD PROFILE
+     ===================================================== */
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
+    const loadProfile = () => {
+      try {
+        const savedProfile =
+          localStorage.getItem(
+            PROFILE_STORAGE_KEY
+          );
 
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
-      ) {
-        setShowProfile(false);
+        if (!savedProfile) return;
+
+        const data = JSON.parse(
+          savedProfile
+        );
+
+        setProfile({
+          name:
+            data.name ||
+            "Rohith.S",
+          email:
+            data.email ||
+            "rohithbecsc@gmail.com",
+          image:
+            data.image || "",
+        });
+      } catch (error) {
+        console.error(
+          "Failed to load profile:",
+          error
+        );
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    loadProfile();
+
+    const handleProfileUpdate = () => {
+      loadProfile();
+    };
+
+    window.addEventListener(
+      "storage",
+      handleProfileUpdate
+    );
+
+    window.addEventListener(
+      PROFILE_UPDATED_EVENT,
+      handleProfileUpdate
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener(
+        "storage",
+        handleProfileUpdate
+      );
+
+      window.removeEventListener(
+        PROFILE_UPDATED_EVENT,
+        handleProfileUpdate
+      );
     };
   }, []);
 
+  /* =====================================================
+     CLOSE SEARCH WHEN CLICKING OUTSIDE
+     ===================================================== */
+
+  useEffect(() => {
+    const handleOutsideClick = (
+      event: MouseEvent
+    ) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+    };
+  }, []);
+
+  /* =====================================================
+     ESCAPE KEY
+     ===================================================== */
+
+  useEffect(() => {
+    const handleEscape = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === "Escape") {
+        setSearchOpen(false);
+        setNotificationsOpen(false);
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+    };
+  }, []);
+
+  /* =====================================================
+     SEARCH RESULTS
+     ===================================================== */
+
+  const filteredResults =
+    searchQuery.trim()
+      ? searchItems.filter((item) => {
+          const query =
+            searchQuery
+              .trim()
+              .toLowerCase();
+
+          return (
+            item.title
+              .toLowerCase()
+              .includes(query) ||
+            item.description
+              .toLowerCase()
+              .includes(query)
+          );
+        })
+      : [];
+
+  /* =====================================================
+     SEARCH RESULT CLICK
+     ===================================================== */
+
+  const handleSearchResult = (
+    path: string
+  ) => {
+    navigate(path);
+
+    setSearchQuery("");
+    setSearchOpen(false);
+  };
+
+  /* =====================================================
+     SEARCH KEYBOARD
+     ===================================================== */
+
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      if (filteredResults.length > 0) {
+        handleSearchResult(
+          filteredResults[0].path
+        );
+      }
+    }
+
+    if (event.key === "Escape") {
+      setSearchQuery("");
+      setSearchOpen(false);
+    }
+  };
+
+  /* =====================================================
+     PROFILE INITIAL
+     ===================================================== */
+
+  const profileInitial =
+    profile.name
+      .trim()
+      .charAt(0)
+      .toUpperCase() || "R";
+
   return (
-    <header className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-lg mb-6">
-      {/* Left */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-          Dashboard
-        </h2>
+    <header
+      className={`
+        fixed
+        top-0
+        right-0
+        z-50
+        h-16
+        border-b
+        border-slate-800/80
+        bg-slate-950/95
+        backdrop-blur-xl
+        transition-all
+        duration-300
+        ${
+          sidebarCollapsed
+            ? "left-[76px]"
+            : "left-64"
+        }
+      `}
+    >
+      <div className="flex h-full w-full items-center px-4 sm:px-5">
 
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {today}
-        </p>
-      </div>
+        {/* =================================================
+            MOBILE MENU
+            ================================================= */}
 
-      {/* Search */}
-      <div className="hidden md:flex items-center bg-gray-100 dark:bg-slate-800 rounded-xl px-4 py-2 w-96">
-        <Search className="w-5 h-5 text-gray-500" />
+        <button
+          type="button"
+          onClick={() =>
+            setMobileSidebarOpen(true)
+          }
+          className="
+            mr-3
+            flex
+            h-10
+            w-10
+            shrink-0
+            items-center
+            justify-center
+            rounded-xl
+            border
+            border-slate-700
+            text-slate-300
+            transition
+            hover:bg-slate-800
+            lg:hidden
+          "
+          aria-label="Open sidebar"
+        >
+          ☰
+        </button>
 
-        <input
-          type="text"
-          placeholder="Search..."
-          className="bg-transparent outline-none ml-2 w-full text-gray-700 dark:text-white placeholder-gray-400"
-        />
-      </div>
+        {/* =================================================
+            BRAND
+            ================================================= */}
 
-      {/* Right */}
-      <div className="flex items-center gap-5">
+        <div
+          className="
+            hidden
+            w-[170px]
+            shrink-0
+            lg:block
+          "
+        >
+          <h1 className="text-sm font-bold text-white">
+            TAGITStore
+          </h1>
 
-        {/* Notifications */}
-        <div className="relative" ref={notificationRef}>
-          <Bell
-            onClick={() =>
-              setShowNotifications(!showNotifications)
-            }
-            className="w-6 h-6 cursor-pointer text-gray-600 hover:text-indigo-600 transition"
-          />
-
-          {showNotifications && (
-            <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-xl border z-50">
-
-              <div className="p-4 font-semibold border-b">
-                Notifications
-              </div>
-
-              <div className="p-4 text-sm">
-                ✅ New Order Received
-              </div>
-
-              <div className="p-4 text-sm border-t">
-                📦 Product Updated Successfully
-              </div>
-
-              <div className="p-4 text-sm border-t">
-                👤 New Customer Registered
-              </div>
-
-            </div>
-          )}
+          <p className="text-[10px] text-slate-400">
+            {t("enterpriseDashboard")}
+          </p>
         </div>
 
-        {/* Profile */}
-        <div className="relative" ref={profileRef}>
+        {/* =================================================
+            SEARCH AREA
+            ================================================= */}
 
-          <UserCircle
-            onClick={() =>
-              setShowProfile(!showProfile)
-            }
-            className="w-8 h-8 cursor-pointer text-indigo-600"
-          />
+        <div
+          ref={searchContainerRef}
+          className="
+            relative
+            mx-3
+            min-w-0
+            flex-1
+          "
+        >
+          <div
+            className={`
+              flex
+              h-10
+              w-full
+              items-center
+              rounded-xl
+              border
+              px-3
+              transition-all
+              duration-200
+              ${
+                searchOpen
+                  ? "border-indigo-500 bg-slate-900 shadow-lg shadow-indigo-500/10"
+                  : "border-slate-700 bg-slate-900/70 hover:border-slate-600"
+              }
+            `}
+          >
+            <Search
+              className={`
+                mr-2
+                h-4
+                w-4
+                shrink-0
+                ${
+                  searchOpen
+                    ? "text-indigo-400"
+                    : "text-slate-400"
+                }
+              `}
+            />
 
-          {showProfile && (
-            <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border z-50">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onFocus={() =>
+                setSearchOpen(true)
+              }
+              onChange={(event) =>
+                setSearchQuery(
+                  event.target.value
+                )
+              }
+              onKeyDown={
+                handleSearchKeyDown
+              }
+              placeholder={t("search")}
+              className="
+                min-w-0
+                flex-1
+                bg-transparent
+                text-sm
+                text-white
+                outline-none
+                placeholder:text-slate-500
+              "
+            />
 
+            {searchQuery && (
               <button
+                type="button"
                 onClick={() => {
-                  setShowProfile(false);
-                  navigate("/profile");
+                  setSearchQuery("");
+                  searchInputRef.current?.focus();
                 }}
-                className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-t-2xl"
+                className="
+                  ml-2
+                  flex
+                  h-6
+                  w-6
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-md
+                  text-slate-400
+                  transition
+                  hover:bg-slate-800
+                  hover:text-white
+                "
+                aria-label="Clear search"
               >
-                👤 My Profile
+                <X className="h-4 w-4" />
               </button>
+            )}
 
-              <button
-                onClick={() => {
-                  setShowProfile(false);
-                  navigate("/settings");
-                }}
-                className="w-full text-left px-4 py-3 hover:bg-gray-100"
+            <span
+              className="
+                ml-2
+                hidden
+                shrink-0
+                rounded-md
+                border
+                border-slate-700
+                bg-slate-800
+                px-2
+                py-1
+                text-[9px]
+                font-semibold
+                text-slate-400
+                md:block
+              "
+            >
+              Ctrl K
+            </span>
+          </div>
+
+          {/* =================================================
+              SEARCH DROPDOWN
+              ================================================= */}
+
+          {searchOpen &&
+            searchQuery.trim() && (
+              <div
+                className="
+                  absolute
+                  left-0
+                  right-0
+                  top-12
+                  z-[100]
+                  overflow-hidden
+                  rounded-2xl
+                  border
+                  border-slate-700
+                  bg-slate-900
+                  shadow-2xl
+                  shadow-black/40
+                "
               >
-                ⚙️ Settings
-              </button>
+                {filteredResults.length > 0 ? (
+                  <div className="max-h-[330px] overflow-y-auto p-2">
 
-              <button
-                onClick={() => {
-                  setShowProfile(false);
-                  navigate("/login");
-                }}
-                className="w-full text-left px-4 py-3 text-red-500 hover:bg-gray-100 rounded-b-2xl"
-              >
-                🚪 Logout
-              </button>
+                    <div className="px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Search results
+                      </p>
+                    </div>
 
-            </div>
-          )}
+                    {filteredResults.map(
+                      (item) => {
+                        const Icon = item.icon;
 
+                        return (
+                          <button
+                            key={item.path}
+                            type="button"
+                            onClick={() =>
+                              handleSearchResult(
+                                item.path
+                              )
+                            }
+                            className="
+                              flex
+                              w-full
+                              items-center
+                              gap-3
+                              rounded-xl
+                              p-3
+                              text-left
+                              transition
+                              hover:bg-slate-800
+                            "
+                          >
+                            <div
+                              className="
+                                flex
+                                h-9
+                                w-9
+                                shrink-0
+                                items-center
+                                justify-center
+                                rounded-lg
+                                bg-indigo-500/10
+                              "
+                            >
+                              <Icon className="h-4 w-4 text-indigo-400" />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-white">
+                                {item.title}
+                              </p>
+
+                              <p className="truncate text-xs text-slate-400">
+                                {item.description}
+                              </p>
+                            </div>
+
+                            <span className="text-slate-500">
+                              →
+                            </span>
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                ) : (
+                  <div className="px-5 py-8 text-center">
+                    <div
+                      className="
+                        mx-auto
+                        mb-3
+                        flex
+                        h-11
+                        w-11
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-slate-800
+                      "
+                    >
+                      <Search className="h-5 w-5 text-slate-500" />
+                    </div>
+
+                    <p className="text-sm font-semibold text-white">
+                      No results found
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Try another search
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
         </div>
 
+        {/* =================================================
+            RIGHT SIDE
+            ================================================= */}
+
+        <div
+          className="
+            flex
+            shrink-0
+            items-center
+            gap-1
+            sm:gap-2
+          "
+        >
+
+          {/* =================================================
+              NOTIFICATION
+              ================================================= */}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() =>
+                setNotificationsOpen(
+                  (previous) =>
+                    !previous
+                )
+              }
+              className="
+                relative
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-xl
+                text-slate-400
+                transition
+                hover:bg-slate-800
+                hover:text-white
+              "
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+
+              <span
+                className="
+                  absolute
+                  right-1
+                  top-1
+                  h-2
+                  w-2
+                  rounded-full
+                  bg-red-500
+                  ring-2
+                  ring-slate-950
+                "
+              />
+            </button>
+
+            {/* Notification popup */}
+
+            {notificationsOpen && (
+              <div
+                className="
+                  absolute
+                  right-0
+                  top-12
+                  z-[100]
+                  w-[310px]
+                  overflow-hidden
+                  rounded-2xl
+                  border
+                  border-slate-700
+                  bg-slate-900
+                  shadow-2xl
+                  shadow-black/40
+                "
+              >
+                <div
+                  className="
+                    flex
+                    items-center
+                    justify-between
+                    border-b
+                    border-slate-800
+                    px-4
+                    py-3
+                  "
+                >
+                  <h3 className="text-sm font-bold text-white">
+                    {t("notifications")}
+                  </h3>
+
+                  <span
+                    className="
+                      rounded-full
+                      bg-indigo-500/10
+                      px-2
+                      py-1
+                      text-[10px]
+                      font-bold
+                      text-indigo-400
+                    "
+                  >
+                    3 New
+                  </span>
+                </div>
+
+                <div className="p-2">
+
+                  <NotificationItem
+                    dot="bg-indigo-500"
+                    title={t(
+                      "newOrderReceived"
+                    )}
+                    message={t(
+                      "newOrderMessage"
+                    )}
+                  />
+
+                  <NotificationItem
+                    dot="bg-emerald-500"
+                    title={t(
+                      "paymentCompleted"
+                    )}
+                    message={t(
+                      "paymentMessage"
+                    )}
+                  />
+
+                  <NotificationItem
+                    dot="bg-orange-500"
+                    title={t(
+                      "lowStockAlert"
+                    )}
+                    message={t(
+                      "lowStockMessage"
+                    )}
+                  />
+
+                </div>
+
+                <div className="border-t border-slate-800 p-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setNotificationsOpen(
+                        false
+                      )
+                    }
+                    className="
+                      w-full
+                      rounded-lg
+                      px-3
+                      py-2
+                      text-xs
+                      font-semibold
+                      text-indigo-400
+                      transition
+                      hover:bg-indigo-500/10
+                    "
+                  >
+                    {t("markAllAsRead")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* =================================================
+              PROFILE
+              ================================================= */}
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/profile")
+            }
+            className="
+              flex
+              items-center
+              gap-2
+              rounded-xl
+              p-1.5
+              transition
+              hover:bg-slate-800
+            "
+          >
+            {/* Profile image */}
+
+            {profile.image ? (
+              <img
+                src={profile.image}
+                alt={profile.name}
+                className="
+                  h-9
+                  w-9
+                  rounded-xl
+                  object-cover
+                  ring-2
+                  ring-indigo-500/20
+                "
+              />
+            ) : (
+              <div
+                className="
+                  flex
+                  h-9
+                  w-9
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-gradient-to-br
+                  from-indigo-500
+                  to-cyan-500
+                  text-sm
+                  font-bold
+                  text-white
+                "
+              >
+                {profileInitial}
+              </div>
+            )}
+
+            {/* Name */}
+
+            <div
+              className="
+                hidden
+                min-w-0
+                text-left
+                xl:block
+              "
+            >
+              <p className="max-w-[100px] truncate text-xs font-bold text-white">
+                {profile.name}
+              </p>
+
+              <p className="text-[10px] text-slate-400">
+                {t("administrator")}
+              </p>
+            </div>
+
+            <ChevronDown
+              className="
+                hidden
+                h-4
+                w-4
+                text-slate-500
+                xl:block
+              "
+            />
+          </button>
+        </div>
       </div>
     </header>
   );
-};
+}
 
-export default Navbar;
+/* =========================================================
+   NOTIFICATION ITEM
+   ========================================================= */
+
+function NotificationItem({
+  dot,
+  title,
+  message,
+}: {
+  dot: string;
+  title: string;
+  message: string;
+}) {
+  return (
+    <button
+      type="button"
+      className="
+        flex
+        w-full
+        gap-3
+        rounded-xl
+        p-3
+        text-left
+        transition
+        hover:bg-slate-800
+      "
+    >
+      <span
+        className={`
+          mt-1.5
+          h-2
+          w-2
+          shrink-0
+          rounded-full
+          ${dot}
+        `}
+      />
+
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-white">
+          {title}
+        </p>
+
+        <p className="mt-1 text-xs leading-5 text-slate-400">
+          {message}
+        </p>
+      </div>
+    </button>
+  );
+}

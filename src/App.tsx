@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   Routes,
   Route,
@@ -22,9 +23,17 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
+// --------------------------------------------------
+// PUBLIC LAYOUT
+// --------------------------------------------------
+
 function PublicLayout() {
   return <Outlet />;
 }
+
+// --------------------------------------------------
+// DASHBOARD LAYOUT
+// --------------------------------------------------
 
 function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] =
@@ -36,6 +45,8 @@ function DashboardLayout() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+
+        {/* Sidebar */}
         <Sidebar
           collapsed={sidebarCollapsed}
           setCollapsed={setSidebarCollapsed}
@@ -43,11 +54,15 @@ function DashboardLayout() {
           setMobileOpen={setMobileSidebarOpen}
         />
 
+        {/* Navbar */}
         <Navbar
-          setMobileSidebarOpen={setMobileSidebarOpen}
+          setMobileSidebarOpen={
+            setMobileSidebarOpen
+          }
           sidebarCollapsed={sidebarCollapsed}
         />
 
+        {/* Main */}
         <main
           className={`min-w-0 pt-16 transition-all duration-300 ${
             sidebarCollapsed
@@ -62,11 +77,20 @@ function DashboardLayout() {
   );
 }
 
+// --------------------------------------------------
+// APP
+// --------------------------------------------------
+
 export default function App() {
   return (
     <Routes>
-      {/* PUBLIC ROUTES */}
+
+      {/* ======================================== */}
+      {/* PUBLIC */}
+      {/* ======================================== */}
+
       <Route element={<PublicLayout />}>
+
         <Route
           path="/home"
           element={<Home />}
@@ -81,10 +105,15 @@ export default function App() {
           path="/signup"
           element={<Signup />}
         />
+
       </Route>
 
-      {/* PROTECTED DASHBOARD ROUTES */}
+      {/* ======================================== */}
+      {/* PROTECTED */}
+      {/* ======================================== */}
+
       <Route element={<DashboardLayout />}>
+
         <Route
           path="/"
           element={<Dashboard />}
@@ -124,9 +153,13 @@ export default function App() {
           path="/settings"
           element={<Settings />}
         />
+
       </Route>
 
+      {/* ======================================== */}
       {/* UNKNOWN URL */}
+      {/* ======================================== */}
+
       <Route
         path="*"
         element={
@@ -136,6 +169,7 @@ export default function App() {
           />
         }
       />
+
     </Routes>
   );
 }
