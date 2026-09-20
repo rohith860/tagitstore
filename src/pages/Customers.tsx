@@ -106,16 +106,30 @@ export default function Customers() {
                 ? data.id
                 : index + 1,
 
-            name: data.name || "",
-            email: data.email || "",
-            phone: data.phone || "",
+            name:
+              typeof data.name === "string"
+                ? data.name
+                : "",
+
+            email:
+              typeof data.email === "string"
+                ? data.email
+                : "",
+
+            phone:
+              typeof data.phone === "string"
+                ? data.phone
+                : "",
 
             orders:
               typeof data.orders === "number"
                 ? data.orders
                 : Number(data.orders) || 0,
 
-            spent: data.spent || "",
+            spent:
+              typeof data.spent === "string"
+                ? data.spent
+                : "",
 
             status:
               data.status === "Premium" ||
@@ -163,7 +177,7 @@ export default function Customers() {
 
   useEffect(() => {
     const handleEscape = (
-      event: KeyboardEvent
+      event: globalThis.KeyboardEvent
     ) => {
       if (event.key !== "Escape") return;
 
@@ -182,8 +196,7 @@ export default function Customers() {
       selectedCustomer ||
       deleteCustomer
     ) {
-      document.body.style.overflow =
-        "hidden";
+      document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
@@ -279,16 +292,16 @@ export default function Customers() {
   ) => {
     switch (status) {
       case "Premium":
-        return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
+        return "border border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-500/20 dark:bg-yellow-500/10 dark:text-yellow-400";
 
       case "Regular":
-        return "bg-blue-500/10 text-blue-400 border border-blue-500/20";
+        return "border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400";
 
       case "New":
-        return "bg-green-500/10 text-green-400 border border-green-500/20";
+        return "border border-green-200 bg-green-50 text-green-700 dark:border-green-500/20 dark:bg-green-500/10 dark:text-green-400";
 
       default:
-        return "bg-slate-800 text-slate-400 border border-slate-700";
+        return "border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400";
     }
   };
 
@@ -693,22 +706,27 @@ export default function Customers() {
   };
 
   // =========================================================
-  // STYLES
+  // LIGHT / DARK STYLES
   // =========================================================
 
   const inputClass =
-    "w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+    "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500";
 
   const labelClass =
-    "mb-2 block text-sm font-medium text-slate-300";
+    "mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300";
+
+  const cardClass =
+    "rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900";
+
+  const modalClass =
+    "rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900";
 
   // =========================================================
   // UI
   // =========================================================
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 text-white sm:p-6">
-
+    <div className="min-h-screen bg-slate-50 p-4 text-slate-900 transition-colors sm:p-6 dark:bg-slate-950 dark:text-white">
       <div className="mx-auto w-full max-w-[1600px] space-y-6">
 
         {/* =================================================
@@ -716,26 +734,24 @@ export default function Customers() {
         ================================================= */}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
               Customers
             </h1>
 
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Manage and understand your customer base
             </p>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-
             <button
               type="button"
               onClick={() =>
                 loadCustomers(true)
               }
               disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               <RefreshCw
                 size={17}
@@ -745,7 +761,6 @@ export default function Customers() {
                     : ""
                 }
               />
-
               Refresh
             </button>
 
@@ -760,7 +775,6 @@ export default function Customers() {
               <UserPlus size={18} />
               Add Customer
             </button>
-
           </div>
         </div>
 
@@ -769,107 +783,95 @@ export default function Customers() {
         ================================================= */}
 
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+          <div className={`${cardClass} p-4`}>
             <div className="flex items-center justify-between gap-3">
-
               <div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Total Customers
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {totalCustomers}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-400">
+              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-500 dark:text-blue-400">
                 <Users size={20} />
               </div>
-
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+          <div className={`${cardClass} p-4`}>
             <div className="flex items-center justify-between gap-3">
-
               <div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Premium
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {premiumCustomers}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-yellow-500/10 p-3 text-yellow-400">
+              <div className="rounded-xl bg-yellow-500/10 p-3 text-yellow-600 dark:text-yellow-400">
                 <Crown size={20} />
               </div>
-
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+          <div className={`${cardClass} p-4`}>
             <div className="flex items-center justify-between gap-3">
-
               <div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Regular
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {regularCustomers}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-400">
+              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-500 dark:text-blue-400">
                 <UserCheck size={20} />
               </div>
-
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+          <div className={`${cardClass} p-4`}>
             <div className="flex items-center justify-between gap-3">
-
               <div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   New Customers
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {newCustomers}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-green-500/10 p-3 text-green-400">
+              <div className="rounded-xl bg-green-500/10 p-3 text-green-600 dark:text-green-400">
                 <UserPlus size={20} />
               </div>
-
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+          <div className={`${cardClass} p-4`}>
             <div className="flex items-center justify-between gap-3">
-
               <div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Customer Orders
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {totalOrders}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-purple-500/10 p-3 text-purple-400">
+              <div className="rounded-xl bg-purple-500/10 p-3 text-purple-600 dark:text-purple-400">
                 <ShoppingBag size={20} />
               </div>
-
             </div>
           </div>
-
         </div>
 
         {/* =================================================
@@ -877,12 +879,10 @@ export default function Customers() {
         ================================================= */}
 
         <div className="flex flex-col gap-3 sm:flex-row">
-
           <div className="relative flex-1">
-
             <Search
               size={19}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
             />
 
             <input
@@ -896,14 +896,12 @@ export default function Customers() {
               placeholder="Search customers, email, phone..."
               className={`${inputClass} pl-11`}
             />
-
           </div>
 
           <div className="relative sm:w-60">
-
             <Filter
               size={17}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
             />
 
             <select
@@ -931,9 +929,7 @@ export default function Customers() {
                 New
               </option>
             </select>
-
           </div>
-
         </div>
 
         {/* =================================================
@@ -941,14 +937,13 @@ export default function Customers() {
         ================================================= */}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Showing{" "}
-            <span className="font-semibold text-slate-300">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
               {filteredCustomers.length}
             </span>{" "}
             of{" "}
-            <span className="font-semibold text-slate-300">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
               {customers.length}
             </span>{" "}
             customers
@@ -961,12 +956,11 @@ export default function Customers() {
               onClick={
                 clearFilters
               }
-              className="text-sm font-medium text-blue-400 hover:text-blue-300"
+              className="text-sm font-medium text-blue-600 transition hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
             >
               Clear filters
             </button>
           )}
-
         </div>
 
         {/* =================================================
@@ -974,45 +968,35 @@ export default function Customers() {
         ================================================= */}
 
         {loading ? (
-
-          <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900">
-
+          <div className={`${cardClass} flex min-h-[300px] flex-col items-center justify-center`}>
             <Loader2
               size={38}
               className="animate-spin text-blue-500"
             />
 
-            <p className="mt-4 text-sm text-slate-400">
+            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
               Loading customers...
             </p>
-
           </div>
-
         ) : filteredCustomers.length > 0 ? (
-
           /* =================================================
               CARDS
           ================================================= */
 
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-
             {filteredCustomers.map(
               (customer) => (
-
                 <div
                   key={
                     customer.firebaseId ||
                     customer.id
                   }
-                  className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg transition duration-300 hover:-translate-y-1 hover:border-slate-700 hover:shadow-xl"
+                  className={`${cardClass} p-5 transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl dark:hover:border-slate-700`}
                 >
-
                   {/* HEADER */}
 
                   <div className="flex items-start justify-between gap-3">
-
                     <div className="flex min-w-0 items-center gap-4">
-
                       <img
                         src={
                           customer.image
@@ -1023,12 +1007,11 @@ export default function Customers() {
                         onError={
                           handleImageError
                         }
-                        className="h-16 w-16 shrink-0 rounded-full border-2 border-slate-700 object-cover"
+                        className="h-16 w-16 shrink-0 rounded-full border-2 border-slate-200 object-cover dark:border-slate-700"
                       />
 
                       <div className="min-w-0">
-
-                        <h2 className="truncate text-lg font-bold text-white">
+                        <h2 className="truncate text-lg font-bold text-slate-900 dark:text-white">
                           {
                             customer.name
                           }
@@ -1043,12 +1026,10 @@ export default function Customers() {
                             customer.status
                           }
                         </span>
-
                       </div>
-
                     </div>
 
-                    <span className="text-xs text-slate-600">
+                    <span className="text-xs text-slate-400 dark:text-slate-600">
                       #
                       {String(
                         customer.id
@@ -1057,21 +1038,19 @@ export default function Customers() {
                         "0"
                       )}
                     </span>
-
                   </div>
 
-                  <div className="my-5 border-t border-slate-800" />
+                  <div className="my-5 border-t border-slate-200 dark:border-slate-800" />
 
                   {/* DETAILS */}
 
                   <div className="space-y-3">
-
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-indigo-500/10 p-2 text-indigo-400">
+                      <div className="rounded-lg bg-indigo-500/10 p-2 text-indigo-500 dark:text-indigo-400">
                         <Mail size={16} />
                       </div>
 
-                      <span className="truncate text-sm text-slate-400">
+                      <span className="truncate text-sm text-slate-600 dark:text-slate-400">
                         {
                           customer.email
                         }
@@ -1079,11 +1058,11 @@ export default function Customers() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-green-500/10 p-2 text-green-400">
+                      <div className="rounded-lg bg-green-500/10 p-2 text-green-600 dark:text-green-400">
                         <Phone size={16} />
                       </div>
 
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
                         {
                           customer.phone
                         }
@@ -1091,11 +1070,11 @@ export default function Customers() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-purple-500/10 p-2 text-purple-400">
+                      <div className="rounded-lg bg-purple-500/10 p-2 text-purple-600 dark:text-purple-400">
                         <ShoppingBag size={16} />
                       </div>
 
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
                         {
                           customer.orders
                         }{" "}
@@ -1104,23 +1083,21 @@ export default function Customers() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-orange-500/10 p-2 text-orange-400">
+                      <div className="rounded-lg bg-orange-500/10 p-2 text-orange-600 dark:text-orange-400">
                         <DollarSign size={16} />
                       </div>
 
-                      <span className="text-sm font-semibold text-slate-300">
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                         {
                           customer.spent
                         }
                       </span>
                     </div>
-
                   </div>
 
                   {/* ACTIONS */}
 
-                  <div className="mt-5 grid grid-cols-[1fr_auto_auto] gap-2 border-t border-slate-800 pt-5">
-
+                  <div className="mt-5 grid grid-cols-[1fr_auto_auto] gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
                     <button
                       type="button"
                       onClick={() =>
@@ -1145,7 +1122,7 @@ export default function Customers() {
                         saving ||
                         deleting
                       }
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-blue-400 transition hover:border-blue-500/40 hover:bg-blue-500/10 disabled:opacity-50"
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-blue-600 transition hover:border-blue-500/40 hover:bg-blue-500/10 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-blue-400"
                     >
                       <Pencil size={18} />
                     </button>
@@ -1161,35 +1138,30 @@ export default function Customers() {
                         saving ||
                         deleting
                       }
-                      className="inline-flex items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2.5 text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
+                      className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-500/20 dark:bg-red-500/5 dark:text-red-400 dark:hover:bg-red-500/10"
                     >
                       <Trash2 size={18} />
                     </button>
-
                   </div>
-
                 </div>
               )
             )}
-
           </div>
-
         ) : (
-
           /* EMPTY */
 
-          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900 px-6 py-14 text-center">
-
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 text-slate-400">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <Users size={26} />
             </div>
 
-            <h3 className="mt-4 text-base font-semibold text-white">
+            <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">
               No customers found
             </h3>
 
-            <p className="mt-1 text-sm text-slate-500">
-              {customers.length === 0
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {customers.length ===
+              0
                 ? "Your Firebase customers collection is empty."
                 : "Try changing your search or customer category."}
             </p>
@@ -1219,7 +1191,6 @@ export default function Customers() {
                 Clear Filters
               </button>
             )}
-
           </div>
         )}
 
@@ -1241,17 +1212,16 @@ export default function Customers() {
               }
             }}
           >
-
-            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-
-              <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-
+            <div
+              className={`${modalClass} max-h-[90vh] w-full max-w-md overflow-y-auto`}
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
                 <div>
-                  <h2 className="text-lg font-bold text-white">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                     Customer Profile
                   </h2>
 
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-500 dark:text-slate-500">
                     Customer details
                   </p>
                 </div>
@@ -1263,17 +1233,14 @@ export default function Customers() {
                       null
                     )
                   }
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+                  className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                 >
                   <X size={20} />
                 </button>
-
               </div>
 
               <div className="p-5">
-
                 <div className="flex flex-col items-center text-center">
-
                   <img
                     src={
                       selectedCustomer.image
@@ -1284,10 +1251,10 @@ export default function Customers() {
                     onError={
                       handleImageError
                     }
-                    className="h-24 w-24 rounded-full border-4 border-slate-700 object-cover"
+                    className="h-24 w-24 rounded-full border-4 border-slate-200 object-cover dark:border-slate-700"
                   />
 
-                  <h3 className="mt-4 text-xl font-bold text-white">
+                  <h3 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">
                     {
                       selectedCustomer.name
                     }
@@ -1302,95 +1269,91 @@ export default function Customers() {
                       selectedCustomer.status
                     }
                   </span>
-
                 </div>
 
                 <div className="mt-6 space-y-3">
-
-                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/60">
+                    <span className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                       <Mail
                         size={17}
-                        className="text-indigo-400"
+                        className="text-indigo-500 dark:text-indigo-400"
                       />
                       Email
                     </span>
 
-                    <span className="max-w-[190px] truncate text-sm text-slate-200">
+                    <span className="max-w-[190px] truncate text-sm text-slate-700 dark:text-slate-200">
                       {
                         selectedCustomer.email
                       }
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/60">
+                    <span className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                       <Phone
                         size={17}
-                        className="text-green-400"
+                        className="text-green-500 dark:text-green-400"
                       />
                       Phone
                     </span>
 
-                    <span className="text-sm text-slate-200">
+                    <span className="text-sm text-slate-700 dark:text-slate-200">
                       {
                         selectedCustomer.phone
                       }
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/60">
+                    <span className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                       <ShoppingBag
                         size={17}
-                        className="text-purple-400"
+                        className="text-purple-500 dark:text-purple-400"
                       />
                       Orders
                     </span>
 
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
                       {
                         selectedCustomer.orders
                       }
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/60">
+                    <span className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                       <DollarSign
                         size={17}
-                        className="text-orange-400"
+                        className="text-orange-500 dark:text-orange-400"
                       />
                       Total Spent
                     </span>
 
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900 dark:text-white">
                       {
                         selectedCustomer.spent
                       }
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                    <span className="flex items-center gap-3 text-sm text-slate-400">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/60">
+                    <span className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                       <Star
                         size={17}
-                        className="text-yellow-400"
+                        className="text-yellow-500 dark:text-yellow-400"
                       />
                       Category
                     </span>
 
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900 dark:text-white">
                       {
                         selectedCustomer.status
                       }
                     </span>
                   </div>
-
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
-
                   <button
                     type="button"
                     onClick={() =>
@@ -1411,18 +1374,15 @@ export default function Customers() {
                         selectedCustomer
                       )
                     }
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/10"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/5 dark:text-red-400 dark:hover:bg-red-500/10"
                   >
                     <Trash2 size={17} />
                     Delete
                   </button>
-
                 </div>
-
               </div>
 
-              <div className="border-t border-slate-800 p-5">
-
+              <div className="border-t border-slate-200 p-5 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() =>
@@ -1430,13 +1390,11 @@ export default function Customers() {
                       null
                     )
                   }
-                  className="w-full rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   Close
                 </button>
-
               </div>
-
             </div>
           </div>
         )}
@@ -1457,19 +1415,18 @@ export default function Customers() {
               }
             }}
           >
-
-            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-
-              <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4 sm:px-6">
-
+            <div
+              className={`${modalClass} max-h-[92vh] w-full max-w-2xl overflow-y-auto`}
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6 dark:border-slate-800">
                 <div>
-                  <h2 className="text-lg font-bold text-white sm:text-xl">
+                  <h2 className="text-lg font-bold text-slate-900 sm:text-xl dark:text-white">
                     {editingCustomer
                       ? "Edit Customer"
                       : "Add Customer"}
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
                     {editingCustomer
                       ? "Update customer information"
                       : "Create a new customer profile"}
@@ -1482,17 +1439,14 @@ export default function Customers() {
                     closeCustomerModal
                   }
                   disabled={saving}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-50"
+                  className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
                 >
                   <X size={20} />
                 </button>
-
               </div>
 
               <div className="p-5 sm:p-6">
-
                 <div className="grid gap-5 md:grid-cols-2">
-
                   <div>
                     <label
                       className={
@@ -1660,7 +1614,6 @@ export default function Customers() {
                   </div>
 
                   <div className="md:col-span-2">
-
                     <label
                       className={
                         labelClass
@@ -1685,18 +1638,15 @@ export default function Customers() {
                       disabled={saving}
                     />
 
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-500">
                       Leave empty to use the default profile image.
                     </p>
-
                   </div>
-
                 </div>
 
                 {formData.image.trim() && (
-                  <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-
-                    <p className="mb-3 text-sm font-medium text-slate-400">
+                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                    <p className="mb-3 text-sm font-medium text-slate-600 dark:text-slate-400">
                       Image Preview
                     </p>
 
@@ -1708,23 +1658,20 @@ export default function Customers() {
                       onError={
                         handleImageError
                       }
-                      className="h-24 w-24 rounded-full border-2 border-slate-700 object-cover"
+                      className="h-24 w-24 rounded-full border-2 border-slate-200 object-cover dark:border-slate-700"
                     />
-
                   </div>
                 )}
-
               </div>
 
-              <div className="flex flex-col-reverse gap-3 border-t border-slate-800 p-5 sm:flex-row sm:justify-end sm:px-6">
-
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-200 p-5 sm:flex-row sm:justify-end sm:px-6 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={
                     closeCustomerModal
                   }
                   disabled={saving}
-                  className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                  className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
@@ -1755,9 +1702,7 @@ export default function Customers() {
                     </>
                   )}
                 </button>
-
               </div>
-
             </div>
           </div>
         )}
@@ -1780,25 +1725,24 @@ export default function Customers() {
               }
             }}
           >
-
-            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-
+            <div
+              className={`${modalClass} w-full max-w-md p-6`}
+            >
               <div className="flex items-start gap-4">
-
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-500 dark:text-red-400">
                   <AlertTriangle
                     size={24}
                   />
                 </div>
 
                 <div>
-                  <h2 className="text-lg font-bold text-white">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                     Delete Customer?
                   </h2>
 
-                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                  <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900 dark:text-white">
                       {
                         deleteCustomer.name
                       }
@@ -1806,11 +1750,9 @@ export default function Customers() {
                     ? This action cannot be undone.
                   </p>
                 </div>
-
               </div>
 
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
                 <button
                   type="button"
                   onClick={() =>
@@ -1819,7 +1761,7 @@ export default function Customers() {
                     )
                   }
                   disabled={deleting}
-                  className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                  className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
@@ -1847,13 +1789,10 @@ export default function Customers() {
                     </>
                   )}
                 </button>
-
               </div>
-
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

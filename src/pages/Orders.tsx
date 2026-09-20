@@ -479,19 +479,19 @@ const Orders = () => {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case "Completed":
-        return "bg-green-500/10 text-green-400 border border-green-500/20";
+        return "bg-green-500/10 text-green-600 border border-green-500/20 dark:text-green-400";
 
       case "Pending":
-        return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
+        return "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20 dark:text-yellow-400";
 
       case "Shipped":
-        return "bg-blue-500/10 text-blue-400 border border-blue-500/20";
+        return "bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:text-blue-400";
 
       case "Cancelled":
-        return "bg-red-500/10 text-red-400 border border-red-500/20";
+        return "bg-red-500/10 text-red-600 border border-red-500/20 dark:text-red-400";
 
       default:
-        return "bg-gray-500/10 text-gray-400 border border-gray-500/20";
+        return "bg-gray-500/10 text-gray-600 border border-gray-500/20 dark:text-gray-400";
     }
   };
 
@@ -502,16 +502,16 @@ const Orders = () => {
   const getPaymentStyle = (payment: string) => {
     switch (payment) {
       case "Paid":
-        return "text-green-400";
+        return "text-green-600 dark:text-green-400";
 
       case "Pending":
-        return "text-yellow-400";
+        return "text-yellow-600 dark:text-yellow-400";
 
       case "Refunded":
-        return "text-red-400";
+        return "text-red-600 dark:text-red-400";
 
       default:
-        return "text-gray-400";
+        return "text-gray-600 dark:text-gray-400";
     }
   };
 
@@ -851,10 +851,10 @@ const Orders = () => {
   ======================================================= */
 
   const inputClass =
-    "w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+    "w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
   const labelClass =
-    "mb-2 block text-sm font-medium text-slate-300";
+    "mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
   /* =======================================================
      LOADING SCREEN
@@ -862,7 +862,7 @@ const Orders = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
         <div className="flex min-h-[70vh] items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader2
@@ -870,7 +870,7 @@ const Orders = () => {
               className="animate-spin text-blue-500"
             />
 
-            <p className="text-sm font-medium text-slate-400">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
               Loading orders...
             </p>
           </div>
@@ -884,7 +884,7 @@ const Orders = () => {
   ======================================================= */
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 text-white sm:p-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 text-slate-900 dark:text-white sm:p-6">
       <div className="mx-auto w-full max-w-[1600px] space-y-6">
         {/* =================================================
             HEADER
@@ -892,11 +892,11 @@ const Orders = () => {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Orders
             </h1>
 
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Manage and track your customer orders
             </p>
           </div>
@@ -907,7 +907,7 @@ const Orders = () => {
               type="button"
               onClick={() => loadOrders(false)}
               disabled={refreshing}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 shadow-sm transition hover:border-slate-600 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-800 dark:text-slate-200 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-200 dark:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCw
                 size={18}
@@ -934,7 +934,7 @@ const Orders = () => {
 
                 setShowAddModal(true);
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 active:scale-[0.98]"
             >
               <Plus size={18} />
               Add Order
@@ -948,14 +948,14 @@ const Orders = () => {
 
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
           {/* Total */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg shadow-black/10">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-lg shadow-black/10">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Total Orders
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {stats.total}
                 </p>
               </div>
@@ -967,14 +967,14 @@ const Orders = () => {
           </div>
 
           {/* Pending */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg shadow-black/10">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-lg shadow-black/10">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Pending
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {stats.pending}
                 </p>
               </div>
@@ -986,14 +986,14 @@ const Orders = () => {
           </div>
 
           {/* Shipped */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg shadow-black/10">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-lg shadow-black/10">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Shipped
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {stats.shipped}
                 </p>
               </div>
@@ -1005,14 +1005,14 @@ const Orders = () => {
           </div>
 
           {/* Completed */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg shadow-black/10">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-lg shadow-black/10">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Completed
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {stats.completed}
                 </p>
               </div>
@@ -1024,14 +1024,14 @@ const Orders = () => {
           </div>
 
           {/* Cancelled */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg shadow-black/10">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-lg shadow-black/10">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   Cancelled
                 </p>
 
-                <p className="mt-2 text-2xl font-bold text-white">
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                   {stats.cancelled}
                 </p>
               </div>
@@ -1091,11 +1091,11 @@ const Orders = () => {
         <div className="flex items-center justify-between">
           <p className="text-sm text-slate-500">
             Showing{" "}
-            <span className="font-semibold text-slate-300">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
               {filteredOrders.length}
             </span>{" "}
             of{" "}
-            <span className="font-semibold text-slate-300">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
               {orders.length}
             </span>{" "}
             orders
@@ -1119,36 +1119,36 @@ const Orders = () => {
             DESKTOP TABLE
         ================================================= */}
 
-        <div className="hidden overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/20 md:block">
+        <div className="hidden overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl shadow-black/20 md:block">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[950px]">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/80">
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-50 dark:bg-slate-950/80">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Order
                   </th>
 
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Customer
                   </th>
 
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Product
                   </th>
 
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Amount
                   </th>
 
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Status
                   </th>
 
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Payment
                   </th>
 
-                  <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Actions
                   </th>
                 </tr>
@@ -1158,32 +1158,32 @@ const Orders = () => {
                 {filteredOrders.map((order) => (
                   <tr
                     key={order.firebaseId || order.id}
-                    className="border-b border-slate-800/80 transition hover:bg-slate-800/40 last:border-b-0"
+                    className="border-b border-slate-200/80 dark:border-slate-200 dark:border-slate-800/80 transition hover:bg-slate-200 dark:bg-slate-800/40 last:border-b-0"
                   >
                     {/* Order */}
                     <td className="px-5 py-4">
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-slate-900 dark:text-white">
                         {order.id}
                       </span>
                     </td>
 
                     {/* Customer */}
                     <td className="px-5 py-4">
-                      <p className="font-medium text-slate-200">
+                      <p className="font-medium text-slate-800 dark:text-slate-200">
                         {order.customer}
                       </p>
                     </td>
 
                     {/* Product */}
                     <td className="px-5 py-4">
-                      <p className="max-w-[220px] truncate text-sm text-slate-400">
+                      <p className="max-w-[220px] truncate text-sm text-slate-500 dark:text-slate-400">
                         {order.product}
                       </p>
                     </td>
 
                     {/* Amount */}
                     <td className="px-5 py-4">
-                      <span className="font-semibold text-slate-100">
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">
                         {order.amount}
                       </span>
                     </td>
@@ -1279,16 +1279,16 @@ const Orders = () => {
           {filteredOrders.map((order) => (
             <div
               key={order.firebaseId || order.id}
-              className="rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg shadow-black/10"
+              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-lg shadow-black/10"
             >
               {/* Header */}
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-bold text-white">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
                     {order.id}
                   </p>
 
-                  <p className="mt-1 text-sm font-medium text-slate-300">
+                  <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     {order.customer}
                   </p>
                 </div>
@@ -1304,12 +1304,12 @@ const Orders = () => {
               </div>
 
               {/* Product */}
-              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+              <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-slate-950/60 p-3">
                 <p className="text-xs text-slate-500">
                   Product
                 </p>
 
-                <p className="mt-1 text-sm font-medium text-slate-200">
+                <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-200">
                   {order.product}
                 </p>
               </div>
@@ -1321,7 +1321,7 @@ const Orders = () => {
                     Amount
                   </p>
 
-                  <p className="mt-1 text-sm font-bold text-white">
+                  <p className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
                     {order.amount}
                   </p>
                 </div>
@@ -1343,13 +1343,13 @@ const Orders = () => {
               </div>
 
               {/* Actions */}
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-800 pt-4">
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-200 dark:border-slate-800 pt-4">
                 <button
                   type="button"
                   onClick={() =>
                     setSelectedOrder(order)
                   }
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:bg-slate-800"
                 >
                   <Eye size={16} />
                   View
@@ -1358,7 +1358,7 @@ const Orders = () => {
                 <button
                   type="button"
                   onClick={() => handleEdit(order)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:bg-slate-800"
                 >
                   <Edit size={16} />
                   Edit
@@ -1394,12 +1394,12 @@ const Orders = () => {
         ================================================= */}
 
         {filteredOrders.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900 px-6 py-14 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 text-slate-400">
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-14 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
               <Package size={26} />
             </div>
 
-            <h3 className="mt-4 text-base font-semibold text-white">
+            <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">
               No orders found
             </h3>
 
@@ -1416,7 +1416,7 @@ const Orders = () => {
                   setSearch("");
                   setStatusFilter("All");
                 }}
-                className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+                className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-white transition hover:bg-blue-500"
               >
                 Clear Filters
               </button>
@@ -1438,11 +1438,11 @@ const Orders = () => {
             }
           }}
         >
-          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-5 py-4">
               <div>
-                <h2 className="text-lg font-bold text-white">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                   Order Details
                 </h2>
 
@@ -1456,7 +1456,7 @@ const Orders = () => {
                 onClick={() =>
                   setSelectedOrder(null)
                 }
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
+                className="rounded-lg p-2 text-slate-500 dark:text-slate-400 transition hover:bg-slate-200 dark:bg-slate-800 hover:text-slate-900 dark:text-white"
               >
                 <X size={20} />
               </button>
@@ -1470,7 +1470,7 @@ const Orders = () => {
                     Customer
                   </p>
 
-                  <p className="mt-1 font-semibold text-white">
+                  <p className="mt-1 font-semibold text-slate-900 dark:text-white">
                     {selectedOrder.customer}
                   </p>
                 </div>
@@ -1480,7 +1480,7 @@ const Orders = () => {
                     Product
                   </p>
 
-                  <p className="mt-1 font-semibold text-white">
+                  <p className="mt-1 font-semibold text-slate-900 dark:text-white">
                     {selectedOrder.product}
                   </p>
                 </div>
@@ -1490,7 +1490,7 @@ const Orders = () => {
                     Amount
                   </p>
 
-                  <p className="mt-1 font-semibold text-white">
+                  <p className="mt-1 font-semibold text-slate-900 dark:text-white">
                     {selectedOrder.amount}
                   </p>
                 </div>
@@ -1510,7 +1510,7 @@ const Orders = () => {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-slate-950/60 p-4">
                 <p className="text-xs font-medium text-slate-500">
                   Order Status
                 </p>
@@ -1529,13 +1529,13 @@ const Orders = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-800 p-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-200 dark:border-slate-800 p-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() =>
                   setSelectedOrder(null)
                 }
-                className="rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800"
+                className="rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:bg-slate-800"
               >
                 Close
               </button>
@@ -1545,7 +1545,7 @@ const Orders = () => {
                 onClick={() =>
                   handleEdit(selectedOrder)
                 }
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-white transition hover:bg-blue-500"
               >
                 <Edit size={16} />
                 Edit Order
@@ -1571,11 +1571,11 @@ const Orders = () => {
             }
           }}
         >
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900 px-5 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4">
               <div>
-                <h2 className="text-lg font-bold text-white">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                   Add New Order
                 </h2>
 
@@ -1588,7 +1588,7 @@ const Orders = () => {
                 type="button"
                 onClick={closeAddModal}
                 disabled={saving}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg p-2 text-slate-500 dark:text-slate-400 transition hover:bg-slate-200 dark:bg-slate-800 hover:text-slate-900 dark:text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X size={20} />
               </button>
@@ -1611,7 +1611,7 @@ const Orders = () => {
                     )
                   }
                   readOnly
-                  className={`${inputClass} cursor-not-allowed bg-slate-950`}
+                  className={`${inputClass} cursor-not-allowed bg-slate-50 dark:bg-slate-950`}
                 />
               </div>
 
@@ -1683,7 +1683,7 @@ const Orders = () => {
                   disabled={saving}
                 />
 
-                <p className="mt-1.5 text-xs text-slate-600">
+                <p className="mt-1.5 text-xs text-slate-500">
                   Example: $1,299 or 1299
                 </p>
               </div>
@@ -1753,12 +1753,12 @@ const Orders = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-800 p-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-200 dark:border-slate-800 p-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeAddModal}
                 disabled={saving}
-                className="rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1767,7 +1767,7 @@ const Orders = () => {
                 type="button"
                 onClick={handleAddOrder}
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? (
                   <>
@@ -1805,11 +1805,11 @@ const Orders = () => {
             }
           }}
         >
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900 px-5 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4">
               <div>
-                <h2 className="text-lg font-bold text-white">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                   Edit Order
                 </h2>
 
@@ -1822,7 +1822,7 @@ const Orders = () => {
                 type="button"
                 onClick={closeEditModal}
                 disabled={saving}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg p-2 text-slate-500 dark:text-slate-400 transition hover:bg-slate-200 dark:bg-slate-800 hover:text-slate-900 dark:text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X size={20} />
               </button>
@@ -1840,7 +1840,7 @@ const Orders = () => {
                   type="text"
                   value={formData.id}
                   readOnly
-                  className={`${inputClass} cursor-not-allowed bg-slate-950`}
+                  className={`${inputClass} cursor-not-allowed bg-slate-50 dark:bg-slate-950`}
                 />
               </div>
 
@@ -1912,7 +1912,7 @@ const Orders = () => {
                   disabled={saving}
                 />
 
-                <p className="mt-1.5 text-xs text-slate-600">
+                <p className="mt-1.5 text-xs text-slate-500">
                   Example: $1,299 or 1299
                 </p>
               </div>
@@ -1982,12 +1982,12 @@ const Orders = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-800 p-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-200 dark:border-slate-800 p-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeEditModal}
                 disabled={saving}
-                className="rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1996,7 +1996,7 @@ const Orders = () => {
                 type="button"
                 onClick={saveEdit}
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? (
                   <>
@@ -2034,7 +2034,7 @@ const Orders = () => {
             }
           }}
         >
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
             {/* Content */}
             <div className="p-5">
               <div className="flex items-start gap-4">
@@ -2043,13 +2043,13 @@ const Orders = () => {
                 </div>
 
                 <div>
-                  <h2 className="text-lg font-bold text-white">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                     Delete Order?
                   </h2>
 
-                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                  <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold text-slate-200">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
                       {orderToDelete.id}
                     </span>
                     ? This action cannot be undone.
@@ -2058,10 +2058,10 @@ const Orders = () => {
               </div>
 
               {/* Preview */}
-              <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <div className="mt-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-slate-950/60 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
                       {orderToDelete.customer}
                     </p>
 
@@ -2070,7 +2070,7 @@ const Orders = () => {
                     </p>
                   </div>
 
-                  <p className="font-bold text-white">
+                  <p className="font-bold text-slate-900 dark:text-white">
                     {orderToDelete.amount}
                   </p>
                 </div>
@@ -2078,12 +2078,12 @@ const Orders = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-800 bg-slate-950/40 p-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-50 dark:bg-slate-950/40 p-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeDeleteModal}
                 disabled={!!deletingOrderId}
-                className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -2092,7 +2092,7 @@ const Orders = () => {
                 type="button"
                 onClick={confirmDelete}
                 disabled={!!deletingOrderId}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {deletingOrderId ? (
                   <>
