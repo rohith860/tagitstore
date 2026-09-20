@@ -1,136 +1,106 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
-
-import {
-  GoogleAuthProvider,
-  RecaptchaVerifier,
-  signInWithEmailAndPassword,
-  signInWithPhoneNumber,
-  signInWithPopup,
-  sendPasswordResetEmail,
-  type AuthError,
-} from "firebase/auth";
-
-import { auth } from "../firebase";
-
+import { useState } from "react";
 import {
   Eye,
   EyeOff,
   Mail,
   Lock,
-  Phone,
-  Chrome,
-  ArrowRight,
+  ShieldCheck,
   Loader2,
-  X,
+  Chrome,
+  CheckCircle2,
 } from "lucide-react";
-
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-type PhoneConfirmation = Awaited<
-  ReturnType<typeof signInWithPhoneNumber>
->;
+import {
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  sendPasswordResetEmail,
+} from "firebase/auth";
+
+import { auth } from "../firebase";
 
 export default function Login() {
-  // --------------------------------------------------
-  // BASIC STATE
-  // --------------------------------------------------
+  const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // =========================================================
+  // STATE
+  // =========================================================
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState(
+    () =>
+      localStorage.getItem(
+        "tagit_remember_email"
+      ) || ""
+  );
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // --------------------------------------------------
-  // PHONE AUTH STATE
-  // --------------------------------------------------
-
-  const [showPhoneModal, setShowPhoneModal] =
-    useState(false);
-
-  const [phoneNumber, setPhoneNumber] =
+  const [password, setPassword] =
     useState("");
 
-  const [otp, setOtp] = useState("");
-
-  const [confirmationResult, setConfirmationResult] =
-    useState<PhoneConfirmation | null>(null);
-
-  const [phoneLoading, setPhoneLoading] =
+  const [showPassword, setShowPassword] =
     useState(false);
 
-  const recaptchaVerifierRef =
-    useRef<RecaptchaVerifier | null>(null);
-
-  // --------------------------------------------------
-  // LOAD REMEMBERED EMAIL
-  // --------------------------------------------------
-
-  useEffect(() => {
-    const savedEmail = localStorage.getItem(
-      "tagit_remember_email"
+  const [rememberEmail, setRememberEmail] =
+    useState(
+      Boolean(
+        localStorage.getItem(
+          "tagit_remember_email"
+        )
+      )
     );
 
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
+  const [loading, setLoading] =
+    useState(false);
 
-  // --------------------------------------------------
-  // FIREBASE ERROR HANDLER
-  // --------------------------------------------------
+  const [googleLoading, setGoogleLoading] =
+    useState(false);
 
-  const getFirebaseErrorMessage = (
+  const [resetLoading, setResetLoading] =
+    useState(false);
+
+  // =========================================================
+  // ERROR MESSAGE
+  // =========================================================
+
+  const getAuthErrorMessage = (
     error: unknown
   ) => {
-    const firebaseError = error as AuthError;
+    const firebaseError = error as {
+      code?: string;
+      message?: string;
+    };
 
     switch (firebaseError.code) {
-      case "auth/user-not-found":
-        return "No account found with this email.";
-
-      case "auth/wrong-password":
-      case "auth/invalid-credential":
-        return "Incorrect email or password.";
-
       case "auth/invalid-email":
         return "Please enter a valid email address.";
+
+      case "auth/user-disabled":
+        return "This account has been disabled.";
+
+      case "auth/user-not-found":
+        return "Unable to sign in with these credentials.";
+
+      case "auth/wrong-password":
+        return "Unable to sign in with these credentials.";
+
+      case "auth/invalid-credential":
+        return "Email or password is incorrect.";
 
       case "auth/too-many-requests":
         return "Too many attempts. Please try again later.";
 
       case "auth/popup-closed-by-user":
-        return "Google sign-in popup was closed.";
+        return "Google sign-in was cancelled.";
 
       case "auth/popup-blocked":
-        return "Your browser blocked the Google popup.";
+        return "Your browser blocked the Google sign-in popup.";
 
       case "auth/unauthorized-domain":
         return "This website domain is not authorized in Firebase.";
 
-      case "auth/operation-not-allowed":
-        return "This authentication method is not enabled in Firebase.";
-
-      case "auth/invalid-phone-number":
-        return "Please enter a valid phone number.";
-
-      case "auth/invalid-verification-code":
-        return "Invalid OTP. Please check the code.";
-
-      case "auth/code-expired":
-        return "OTP expired. Please request a new one.";
-
-      case "auth/quota-exceeded":
-        return "SMS limit reached. Try again later.";
+      case "auth/account-exists-with-different-credential":
+        return "An account already exists with a different sign-in method.";
 
       default:
         return (
@@ -140,20 +110,26 @@ export default function Login() {
     }
   };
 
-  // --------------------------------------------------
+  // =========================================================
   // EMAIL LOGIN
-  // --------------------------------------------------
+  // =========================================================
 
-  const handleLogin = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
+  const handleEmailLogin = async () => {
+    if (loading) return;
 
-    setError("");
+    const cleanEmail =
+      email.trim();
 
-    if (!email.trim() || !password.trim()) {
-      setError(
-        "Please enter email and password."
+    if (!cleanEmail) {
+      toast.error(
+        "Please enter your email address."
+      );
+      return;
+    }
+
+    if (!password) {
+      toast.error(
+        "Please enter your password."
       );
       return;
     }
@@ -161,32 +137,16 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const result =
-        await signInWithEmailAndPassword(
-          auth,
-          email.trim(),
-          password
-        );
-
-      console.log(
-        "✅ Email login successful"
+      await signInWithEmailAndPassword(
+        auth,
+        cleanEmail,
+        password
       );
 
-      console.log(
-        "👤 Firebase user:",
-        result.user
-      );
-
-      console.log(
-        "🔥 Firebase currentUser:",
-        auth.currentUser
-      );
-
-      // Remember email
-      if (rememberMe) {
+      if (rememberEmail) {
         localStorage.setItem(
           "tagit_remember_email",
-          email.trim()
+          cleanEmail
         );
       } else {
         localStorage.removeItem(
@@ -194,726 +154,604 @@ export default function Login() {
         );
       }
 
-      // Refresh Firebase user
-      await auth.currentUser?.reload();
-
       toast.success(
         "Login successful!"
       );
 
-      // IMPORTANT
-      // Reload the app and open dashboard
-      window.location.replace("/");
+      navigate("/", {
+        replace: true,
+      });
     } catch (error) {
       console.error(
-        "❌ Email login error:",
+        "Email login error:",
         error
       );
 
-      setError(
-        getFirebaseErrorMessage(error)
+      toast.error(
+        getAuthErrorMessage(error)
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // --------------------------------------------------
+  // =========================================================
+  // FORGOT PASSWORD
+  // =========================================================
+
+  const handleForgotPassword =
+    async () => {
+      if (resetLoading) return;
+
+      const cleanEmail =
+        email.trim();
+
+      if (!cleanEmail) {
+        toast.error(
+          "Enter your email address first."
+        );
+        return;
+      }
+
+      try {
+        setResetLoading(true);
+
+        await sendPasswordResetEmail(
+          auth,
+          cleanEmail
+        );
+
+        toast.success(
+          "Password reset email sent. Check your inbox."
+        );
+      } catch (error) {
+        console.error(
+          "Password reset error:",
+          error
+        );
+
+        const firebaseError =
+          error as {
+            code?: string;
+          };
+
+        switch (firebaseError.code) {
+          case "auth/invalid-email":
+            toast.error(
+              "Please enter a valid email address."
+            );
+            break;
+
+          case "auth/too-many-requests":
+            toast.error(
+              "Too many requests. Please try again later."
+            );
+            break;
+
+          default:
+            toast.error(
+              "Unable to send password reset email."
+            );
+        }
+      } finally {
+        setResetLoading(false);
+      }
+    };
+
+  // =========================================================
   // GOOGLE LOGIN
-  // --------------------------------------------------
+  // =========================================================
 
-  const handleGoogleLogin = async () => {
-    setError("");
+  const handleGoogleLogin =
+    async () => {
+      if (googleLoading) return;
 
-    try {
-      setLoading(true);
+      try {
+        setGoogleLoading(true);
 
-      const provider =
-        new GoogleAuthProvider();
+        const provider =
+          new GoogleAuthProvider();
 
-      provider.setCustomParameters({
-        prompt: "select_account",
-      });
+        provider.setCustomParameters({
+          prompt: "select_account",
+        });
 
-      const result =
         await signInWithPopup(
           auth,
           provider
         );
 
-      console.log(
-        "✅ Google login successful"
-      );
-
-      console.log(
-        "👤 Google user:",
-        result.user
-      );
-
-      console.log(
-        "🔥 Firebase currentUser:",
-        auth.currentUser
-      );
-
-      // Refresh Firebase session
-      await auth.currentUser?.reload();
-
-      toast.success(
-        "Google login successful!"
-      );
-
-      // IMPORTANT
-      // Reload app and let ProtectedRoute
-      // detect the Firebase session.
-      window.location.replace("/");
-    } catch (error) {
-      console.error(
-        "❌ Google login error:",
-        error
-      );
-
-      setError(
-        getFirebaseErrorMessage(error)
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --------------------------------------------------
-  // CREATE RECAPTCHA
-  // --------------------------------------------------
-
-  const createRecaptcha = () => {
-    if (recaptchaVerifierRef.current) {
-      return recaptchaVerifierRef.current;
-    }
-
-    const verifier =
-      new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {
-          size: "invisible",
-
-          callback: () => {
-            console.log(
-              "✅ reCAPTCHA completed"
-            );
-          },
-
-          "expired-callback": () => {
-            console.log(
-              "⚠️ reCAPTCHA expired"
-            );
-          },
-        }
-      );
-
-    recaptchaVerifierRef.current =
-      verifier;
-
-    return verifier;
-  };
-
-  // --------------------------------------------------
-  // SEND PHONE OTP
-  // --------------------------------------------------
-
-  const handleSendOtp = async () => {
-    setError("");
-
-    if (!phoneNumber.trim()) {
-      setError(
-        "Please enter your phone number."
-      );
-      return;
-    }
-
-    try {
-      setPhoneLoading(true);
-
-      const verifier =
-        createRecaptcha();
-
-      const result =
-        await signInWithPhoneNumber(
-          auth,
-          phoneNumber.trim(),
-          verifier
+        toast.success(
+          "Google login successful!"
         );
 
-      console.log(
-        "✅ OTP sent successfully"
-      );
+        navigate("/", {
+          replace: true,
+        });
+      } catch (error) {
+        console.error(
+          "Google login error:",
+          error
+        );
 
-      setConfirmationResult(result);
-
-      toast.success(
-        "OTP sent successfully!"
-      );
-    } catch (error) {
-      console.error(
-        "❌ Phone login error:",
-        error
-      );
-
-      setError(
-        getFirebaseErrorMessage(error)
-      );
-
-      if (
-        recaptchaVerifierRef.current
-      ) {
-        try {
-          recaptchaVerifierRef.current.clear();
-        } catch {
-          // Ignore cleanup error
-        }
-
-        recaptchaVerifierRef.current =
-          null;
+        toast.error(
+          getAuthErrorMessage(error)
+        );
+      } finally {
+        setGoogleLoading(false);
       }
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
+    };
 
-  // --------------------------------------------------
-  // VERIFY PHONE OTP
-  // --------------------------------------------------
+  // =========================================================
+  // ENTER KEY
+  // =========================================================
 
-  const handleVerifyOtp = async () => {
-    setError("");
-
-    if (!confirmationResult) {
-      setError(
-        "Please request the OTP first."
-      );
-      return;
-    }
-
-    if (otp.trim().length < 6) {
-      setError(
-        "Please enter the 6-digit OTP."
-      );
-      return;
-    }
-
-    try {
-      setPhoneLoading(true);
-
-      const result =
-        await confirmationResult.confirm(
-          otp.trim()
-        );
-
-      console.log(
-        "✅ Phone login successful"
-      );
-
-      console.log(
-        "👤 Phone user:",
-        result.user
-      );
-
-      console.log(
-        "🔥 Firebase currentUser:",
-        auth.currentUser
-      );
-
-      // Refresh Firebase session
-      await auth.currentUser?.reload();
-
-      toast.success(
-        "Phone login successful!"
-      );
-
-      setShowPhoneModal(false);
-      setConfirmationResult(null);
-      setOtp("");
-
-      // IMPORTANT
-      window.location.replace("/");
-    } catch (error) {
-      console.error(
-        "❌ OTP verification error:",
-        error
-      );
-
-      setError(
-        getFirebaseErrorMessage(error)
-      );
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
-  // --------------------------------------------------
-  // FORGOT PASSWORD
-  // --------------------------------------------------
-
-  const handleForgotPassword = async () => {
-    setError("");
-
-    if (!email.trim()) {
-      setError(
-        "Enter your email address first."
-      );
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      await sendPasswordResetEmail(
-        auth,
-        email.trim()
-      );
-
-      toast.success(
-        "Password reset email sent!"
-      );
-    } catch (error) {
-      console.error(
-        "❌ Password reset error:",
-        error
-      );
-
-      setError(
-        getFirebaseErrorMessage(error)
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --------------------------------------------------
-  // OPEN PHONE MODAL
-  // --------------------------------------------------
-
-  const openPhoneModal = () => {
-    setError("");
-    setPhoneNumber("");
-    setOtp("");
-    setConfirmationResult(null);
-
-    setShowPhoneModal(true);
-  };
-
-  // --------------------------------------------------
-  // CLOSE PHONE MODAL
-  // --------------------------------------------------
-
-  const closePhoneModal = () => {
-    setShowPhoneModal(false);
-
-    setPhoneNumber("");
-    setOtp("");
-    setConfirmationResult(null);
-    setError("");
-
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (
-      recaptchaVerifierRef.current
+      event.key === "Enter"
     ) {
-      try {
-        recaptchaVerifierRef.current.clear();
-      } catch {
-        // Ignore cleanup error
-      }
-
-      recaptchaVerifierRef.current =
-        null;
+      event.preventDefault();
+      void handleEmailLogin();
     }
   };
 
-  // --------------------------------------------------
+  // =========================================================
   // UI
-  // --------------------------------------------------
+  // =========================================================
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[-10%] h-[400px] w-[400px] rounded-full bg-indigo-600/20 blur-[120px]" />
+    <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-white">
+      <div className="grid min-h-screen lg:grid-cols-2">
 
-        <div className="absolute bottom-[-10%] right-[-10%] h-[400px] w-[400px] rounded-full bg-cyan-500/10 blur-[120px]" />
-      </div>
+        {/* =================================================
+            LEFT BRAND PANEL
+        ================================================= */}
 
-      <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md">
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 p-10 text-white lg:flex lg:flex-col lg:justify-between">
 
-          {/* Logo */}
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 shadow-lg shadow-indigo-500/30">
-              <span className="text-3xl font-black">
-                T
-              </span>
-            </div>
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
 
-            <h1 className="text-4xl font-black tracking-tight">
-              TAGIT
-              <span className="text-cyan-400">
-                Store
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-black/10 blur-3xl" />
+
+          <div className="relative z-10">
+            <Link
+              to="/home"
+              className="inline-flex items-center gap-3"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+                <ShieldCheck
+                  size={25}
+                />
+              </div>
+
+              <div>
+                <p className="text-xl font-extrabold tracking-tight">
+                  TAGITStore
+                </p>
+
+                <p className="text-xs text-white/75">
+                  Enterprise Dashboard
+                </p>
+              </div>
+            </Link>
+          </div>
+
+          <div className="relative z-10 max-w-xl">
+
+            <p className="mb-4 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
+              Secure authentication
+            </p>
+
+            <h1 className="text-4xl font-black leading-tight xl:text-5xl">
+              Welcome back to your
+              <span className="block text-white/80">
+                TAGITStore dashboard.
               </span>
             </h1>
 
-            <p className="mt-2 text-sm text-slate-400">
-              Welcome back! Sign in to continue.
+            <p className="mt-5 max-w-lg text-sm leading-7 text-white/75">
+              Manage products, orders,
+              customers, analytics and
+              your business settings from
+              one secure dashboard.
             </p>
-          </div>
 
-          {/* Card */}
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
 
-            {/* Header */}
-            <div className="mb-7">
-              <h2 className="text-2xl font-bold">
-                Sign in
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-400">
-                Access your TAGITStore dashboard
-              </p>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="mb-5 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
-                ⚠️ {error}
-              </div>
-            )}
-
-            {/* Email Form */}
-            <form
-              onSubmit={handleLogin}
-              className="space-y-5"
-            >
-
-              {/* Email */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-200">
-                  Email address
-                </label>
-
-                <div className="relative">
-                  <Mail
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) =>
-                      setEmail(e.target.value)
-                    }
-                    placeholder="Enter your email"
-                    className="w-full rounded-xl border border-white/10 bg-slate-900/70 py-3.5 pl-11 pr-4 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-200">
-                    Password
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={
-                      handleForgotPassword
-                    }
-                    className="text-xs font-medium text-cyan-400 hover:text-cyan-300"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                <div className="relative">
-                  <Lock
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-
-                  <input
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-                    value={password}
-                    onChange={(e) =>
-                      setPassword(e.target.value)
-                    }
-                    placeholder="Enter your password"
-                    className="w-full rounded-xl border border-white/10 bg-slate-900/70 py-3.5 pl-11 pr-12 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowPassword(
-                        (value) => !value
-                      )
-                    }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                  >
-                    {showPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember */}
-              <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-400">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) =>
-                    setRememberMe(
-                      e.target.checked
-                    )
-                  }
-                  className="h-4 w-4 rounded border-slate-700 bg-slate-900"
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                <CheckCircle2
+                  size={19}
                 />
 
-                Remember me
-              </label>
+                <p className="mt-3 text-sm font-semibold">
+                  Firebase Auth
+                </p>
 
-              {/* Sign In */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-3.5 font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? (
-                  <>
-                    <Loader2
-                      size={18}
-                      className="animate-spin"
-                    />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    Sign in
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-            </form>
+                <p className="mt-1 text-xs text-white/65">
+                  Secure account access
+                </p>
+              </div>
 
-            {/* Divider */}
-            <div className="my-7 flex items-center gap-4">
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                <ShieldCheck
+                  size={19}
+                />
 
-              <span className="text-xs font-medium text-slate-500">
-                OR CONTINUE WITH
-              </span>
+                <p className="mt-3 text-sm font-semibold">
+                  Protected
+                </p>
 
-              <div className="h-px flex-1 bg-white/10" />
+                <p className="mt-1 text-xs text-white/65">
+                  Authenticated routes
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                <Chrome size={19} />
+
+                <p className="mt-3 text-sm font-semibold">
+                  Google
+                </p>
+
+                <p className="mt-1 text-xs text-white/65">
+                  Quick sign in
+                </p>
+              </div>
+
             </div>
+          </div>
 
-            {/* Google */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="mb-3 flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Chrome size={19} />
-
-              Continue with Google
-            </button>
-
-            {/* Phone */}
-            <button
-              type="button"
-              onClick={openPhoneModal}
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Phone size={19} />
-
-              Continue with Phone
-            </button>
-
-            {/* Footer */}
-            <p className="mt-7 text-center text-xs text-slate-500">
-              © 2026 TAGITStore. All rights reserved.
-            </p>
+          <div className="relative z-10 text-xs text-white/55">
+            © {new Date().getFullYear()} TAGITStore
           </div>
         </div>
-      </div>
 
-      {/* Invisible reCAPTCHA */}
-      <div id="recaptcha-container" />
+        {/* =================================================
+            RIGHT LOGIN PANEL
+        ================================================= */}
 
-      {/* PHONE MODAL */}
-      {showPhoneModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+        <div className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-10">
 
-          <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl sm:p-8">
+          <div className="w-full max-w-md">
 
-            {/* Close */}
-            <button
-              type="button"
-              onClick={closePhoneModal}
-              className="absolute right-4 top-4 rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white"
-            >
-              <X size={20} />
-            </button>
+            {/* Mobile Brand */}
 
-            {/* Heading */}
-            <div className="mb-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/15">
-                <Phone
-                  size={23}
-                  className="text-indigo-400"
-                />
-              </div>
+            <div className="mb-8 flex items-center justify-center lg:hidden">
 
-              <h3 className="text-2xl font-bold">
-                Verify your phone
-              </h3>
-
-              <p className="mt-2 text-sm text-slate-400">
-                {confirmationResult
-                  ? "Enter the 6-digit verification code."
-                  : "Enter your phone number to receive an OTP."}
-              </p>
-            </div>
-
-            {/* Modal Error */}
-            {error && (
-              <div className="mb-5 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-200">
-                {error}
-              </div>
-            )}
-
-            {/* PHONE NUMBER */}
-            {!confirmationResult ? (
-              <div className="space-y-4">
+              <Link
+                to="/home"
+                className="inline-flex items-center gap-3"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                  <ShieldCheck
+                    size={24}
+                  />
+                </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-200">
-                    Phone number
+                  <p className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    TAGITStore
+                  </p>
+
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Enterprise Dashboard
+                  </p>
+                </div>
+              </Link>
+
+            </div>
+
+            {/* Header */}
+
+            <div className="mb-8">
+
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">
+                <ShieldCheck
+                  size={14}
+                />
+                Secure login
+              </div>
+
+              <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                Welcome back
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                Sign in to continue to
+                your TAGITStore dashboard.
+              </p>
+
+            </div>
+
+            {/* LOGIN CARD */}
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 sm:p-6 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
+
+              {/* =================================================
+                  EMAIL LOGIN
+              ================================================= */}
+
+              <div className="space-y-5">
+
+                {/* Email */}
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Email address
                   </label>
 
                   <div className="relative">
-                    <Phone
+
+                    <Mail
                       size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                     />
 
                     <input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) =>
-                        setPhoneNumber(
-                          e.target.value
+                      type="email"
+                      value={email}
+                      onChange={(
+                        event
+                      ) =>
+                        setEmail(
+                          event.target.value
                         )
                       }
-                      placeholder="+1 650 555 3434"
-                      className="w-full rounded-xl border border-white/10 bg-slate-950 py-3.5 pl-11 pr-4 text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                      onKeyDown={
+                        handleKeyDown
+                      }
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      disabled={loading}
+                      className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
                     />
+
                   </div>
 
-                  <p className="mt-2 text-xs text-slate-500">
-                    Include your country code.
-                  </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleSendOtp}
-                  disabled={phoneLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-3.5 font-semibold text-white disabled:opacity-60"
-                >
-                  {phoneLoading ? (
-                    <>
-                      <Loader2
-                        size={18}
-                        className="animate-spin"
-                      />
-                      Sending OTP...
-                    </>
-                  ) : (
-                    "Send OTP"
-                  )}
-                </button>
-              </div>
-            ) : (
-              /* OTP */
-              <div className="space-y-4">
+                {/* Password */}
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-200">
-                    Verification code
-                  </label>
+
+                  <div className="mb-2 flex items-center justify-between">
+
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Password
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void handleForgotPassword()
+                      }
+                      disabled={
+                        resetLoading
+                      }
+                      className="text-xs font-semibold text-blue-600 transition hover:text-blue-500 disabled:opacity-50 dark:text-blue-400"
+                    >
+                      {resetLoading
+                        ? "Sending..."
+                        : "Forgot password?"}
+                    </button>
+
+                  </div>
+
+                  <div className="relative">
+
+                    <Lock
+                      size={18}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <input
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
+                      value={
+                        password
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setPassword(
+                          event.target.value
+                        )
+                      }
+                      onKeyDown={
+                        handleKeyDown
+                      }
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                      disabled={loading}
+                      className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-12 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword(
+                          (
+                            previous
+                          ) =>
+                            !previous
+                        )
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff
+                          size={18}
+                        />
+                      ) : (
+                        <Eye
+                          size={18}
+                        />
+                      )}
+                    </button>
+
+                  </div>
+
+                </div>
+
+                {/* Remember */}
+
+                <label className="flex cursor-pointer items-center gap-3">
 
                   <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) =>
-                      setOtp(
-                        e.target.value.replace(
-                          /\D/g,
-                          ""
-                        )
+                    type="checkbox"
+                    checked={
+                      rememberEmail
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setRememberEmail(
+                        event.target.checked
                       )
                     }
-                    placeholder="Enter 6-digit OTP"
-                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3.5 text-center text-xl tracking-[0.5em] text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                    className="h-4 w-4 rounded border-slate-300 accent-blue-600"
                   />
-                </div>
+
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    Remember my email
+                  </span>
+
+                </label>
+
+                {/* Sign in */}
 
                 <button
                   type="button"
-                  onClick={handleVerifyOtp}
-                  disabled={phoneLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-3.5 font-semibold text-white disabled:opacity-60"
+                  onClick={() =>
+                    void handleEmailLogin()
+                  }
+                  disabled={loading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {phoneLoading ? (
+                  {loading ? (
                     <>
                       <Loader2
                         size={18}
                         className="animate-spin"
                       />
-                      Verifying...
+
+                      Signing in...
                     </>
                   ) : (
-                    "Verify & Sign In"
+                    "Sign in"
                   )}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirmationResult(
-                      null
-                    );
-
-                    setOtp("");
-                    setError("");
-                  }}
-                  className="w-full text-sm text-slate-400 hover:text-white"
-                >
-                  Use a different number
-                </button>
               </div>
-            )}
+
+              {/* =================================================
+                  GOOGLE DIVIDER
+              ================================================= */}
+
+              <div className="my-6 flex items-center gap-3">
+
+                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+
+                <span className="text-xs font-medium text-slate-400">
+                  OR CONTINUE WITH
+                </span>
+
+                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+
+              </div>
+
+              {/* =================================================
+                  GOOGLE LOGIN
+              ================================================= */}
+
+              <button
+                type="button"
+                onClick={() =>
+                  void handleGoogleLogin()
+                }
+                disabled={
+                  googleLoading
+                }
+                className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
+              >
+                {googleLoading ? (
+                  <Loader2
+                    size={18}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Chrome
+                    size={18}
+                  />
+                )}
+
+                {googleLoading
+                  ? "Connecting..."
+                  : "Continue with Google"}
+              </button>
+
+              {/* =================================================
+                  SIGNUP
+              ================================================= */}
+
+              <div className="mt-6 text-center">
+
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Don't have an account?{" "}
+
+                  <Link
+                    to="/signup"
+                    className="font-bold text-blue-600 transition hover:text-blue-500 dark:text-blue-400"
+                  >
+                    Create account
+                  </Link>
+                </p>
+
+              </div>
+
+              {/* SECURITY */}
+
+              <div className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-slate-400 dark:text-slate-500">
+
+                <ShieldCheck
+                  size={14}
+                />
+
+                Secure authentication
+                powered by Firebase
+
+              </div>
+
+            </div>
+
+            {/* Back home */}
+
+            <div className="mt-6 text-center">
+
+              <Link
+                to="/home"
+                className="text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              >
+                ← Back to home
+              </Link>
+
+            </div>
+
           </div>
+
         </div>
-      )}
+      </div>
     </div>
   );
 }
