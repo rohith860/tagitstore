@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import type { Dispatch, SetStateAction } from "react";
+import {
+  NavLink,
+  useNavigate,
+} from "react-router-dom";
+import type {
+  Dispatch,
+  SetStateAction,
+} from "react";
 
 import {
   LayoutDashboard,
@@ -15,6 +21,9 @@ import {
   X,
   Store,
 } from "lucide-react";
+
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase";
 
 const menuItems = [
   {
@@ -66,8 +75,11 @@ interface ProfileData {
   image: string;
 }
 
-const PROFILE_STORAGE_KEY = "tagit_profile";
-const PROFILE_UPDATED_EVENT = "tagit-profile-updated";
+const PROFILE_STORAGE_KEY =
+  "tagit_profile";
+
+const PROFILE_UPDATED_EVENT =
+  "tagit-profile-updated";
 
 const defaultProfile: ProfileData = {
   name: "Admin",
@@ -87,16 +99,18 @@ export default function Sidebar({
 }: SidebarProps) {
   const navigate = useNavigate();
 
-  // --------------------------------------------------
+  // =====================================================
   // PROFILE STATE
-  // --------------------------------------------------
+  // =====================================================
 
   const [profile, setProfile] =
-    useState<ProfileData>(defaultProfile);
+    useState<ProfileData>(
+      defaultProfile
+    );
 
-  // --------------------------------------------------
+  // =====================================================
   // LOAD PROFILE
-  // --------------------------------------------------
+  // =====================================================
 
   useEffect(() => {
     const loadProfile = () => {
@@ -125,12 +139,11 @@ export default function Sidebar({
       }
     };
 
-    // Initial profile load
     loadProfile();
 
-    // --------------------------------------------------
-    // SAME-TAB PROFILE UPDATE
-    // --------------------------------------------------
+    // ===================================================
+    // SAME TAB PROFILE UPDATE
+    // ===================================================
 
     const handleProfileUpdated = (
       event: Event
@@ -148,15 +161,16 @@ export default function Sidebar({
       }
     };
 
-    // --------------------------------------------------
-    // CROSS-TAB PROFILE UPDATE
-    // --------------------------------------------------
+    // ===================================================
+    // CROSS TAB PROFILE UPDATE
+    // ===================================================
 
     const handleStorageChange = (
       event: StorageEvent
     ) => {
       if (
-        event.key === PROFILE_STORAGE_KEY
+        event.key ===
+        PROFILE_STORAGE_KEY
       ) {
         loadProfile();
       }
@@ -185,12 +199,13 @@ export default function Sidebar({
     };
   }, []);
 
-  // --------------------------------------------------
+  // =====================================================
   // PROFILE INITIALS
-  // --------------------------------------------------
+  // =====================================================
 
   const getInitials = () => {
-    const name = profile.name.trim();
+    const name =
+      profile.name.trim();
 
     if (!name) {
       return "A";
@@ -198,33 +213,58 @@ export default function Sidebar({
 
     return name
       .split(/\s+/)
-      .map((part) => part[0] || "")
+      .map(
+        (part) => part[0] || ""
+      )
       .join("")
       .slice(0, 2)
       .toUpperCase();
   };
 
-  // --------------------------------------------------
+  // =====================================================
   // LOGOUT
-  // --------------------------------------------------
+  // =====================================================
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    setMobileOpen(false);
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // Firebase logout
+      await signOut(auth);
+
+      // Remove old local auth flag if it exists
+      localStorage.removeItem(
+        "isLoggedIn"
+      );
+
+      // Close mobile sidebar
+      setMobileOpen(false);
+
+      // Go to login
+      navigate("/login", {
+        replace: true,
+      });
+
+      console.log(
+        "✅ Successfully logged out"
+      );
+    } catch (error) {
+      console.error(
+        "❌ Logout failed:",
+        error
+      );
+    }
   };
 
-  // --------------------------------------------------
+  // =====================================================
   // NAVIGATION
-  // --------------------------------------------------
+  // =====================================================
 
   const handleNavigation = () => {
     setMobileOpen(false);
   };
 
-  // --------------------------------------------------
+  // =====================================================
   // OPEN PROFILE
-  // --------------------------------------------------
+  // =====================================================
 
   const handleProfileClick = () => {
     setMobileOpen(false);
@@ -235,51 +275,129 @@ export default function Sidebar({
     <>
       {/* =====================================================
           MOBILE OVERLAY
-      ===================================================== */}
+         ===================================================== */}
 
       <div
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden ${
-          mobileOpen
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
-        }`}
-        onClick={() => setMobileOpen(false)}
+        className={`
+          fixed
+          inset-0
+          z-40
+          bg-black/40
+          backdrop-blur-[2px]
+          transition-opacity
+          duration-300
+          lg:hidden
+
+          dark:bg-black/60
+
+          ${
+            mobileOpen
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+          }
+        `}
+        onClick={() =>
+          setMobileOpen(false)
+        }
         aria-hidden="true"
       />
 
       {/* =====================================================
           SIDEBAR
-      ===================================================== */}
+         ===================================================== */}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-slate-800 bg-slate-950 text-white shadow-2xl shadow-black/30 transition-all duration-300 ${
-          collapsed
-            ? "w-[76px]"
-            : "w-64"
-        } ${
-          mobileOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
-        } lg:translate-x-0`}
+        className={`
+          fixed
+          left-0
+          top-0
+          z-50
+          flex
+          h-screen
+          flex-col
+          border-r
+          border-slate-200
+          bg-white
+          text-slate-900
+          shadow-xl
+          shadow-slate-900/10
+          transition-all
+          duration-300
+
+          dark:border-slate-800
+          dark:bg-slate-950
+          dark:text-white
+          dark:shadow-black/30
+
+          ${
+            collapsed
+              ? "w-[76px]"
+              : "w-64"
+          }
+
+          ${
+            mobileOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+
+          lg:translate-x-0
+        `}
       >
         {/* ===================================================
             HEADER
-        =================================================== */}
+           =================================================== */}
 
-        <div className="relative flex h-20 shrink-0 items-center border-b border-slate-800 px-4">
+        <div
+          className="
+            relative
+            flex
+            h-20
+            shrink-0
+            items-center
+            border-b
+            border-slate-200
+            px-4
+
+            dark:border-slate-800
+          "
+        >
+          {/* BRAND */}
+
           <button
             type="button"
             onClick={() => {
               navigate("/");
               setMobileOpen(false);
             }}
-            className={`flex w-full items-center ${
-              collapsed
-                ? "justify-center"
-                : "gap-3"
-            }`}
+            className={`
+              flex
+              w-full
+              items-center
+
+              ${
+                collapsed
+                  ? "justify-center"
+                  : "gap-3"
+              }
+            `}
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg shadow-blue-500/20">
+            <div
+              className="
+                flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                bg-gradient-to-br
+                from-blue-500
+                to-violet-600
+                shadow-lg
+                shadow-blue-500/20
+              "
+            >
               <Store
                 size={21}
                 className="text-white"
@@ -288,18 +406,39 @@ export default function Sidebar({
 
             {!collapsed && (
               <div className="text-left">
-                <p className="text-lg font-black tracking-tight text-white">
+                <p
+                  className="
+                    text-lg
+                    font-black
+                    tracking-tight
+                    text-slate-900
+
+                    dark:text-white
+                  "
+                >
                   TAGITStore
                 </p>
 
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p
+                  className="
+                    text-[10px]
+                    font-semibold
+                    uppercase
+                    tracking-[0.18em]
+                    text-slate-500
+
+                    dark:text-slate-500
+                  "
+                >
                   Admin Panel
                 </p>
               </div>
             )}
           </button>
 
-          {/* DESKTOP COLLAPSE BUTTON */}
+          {/* =================================================
+              DESKTOP COLLAPSE BUTTON
+             ================================================= */}
 
           <button
             type="button"
@@ -308,7 +447,33 @@ export default function Sidebar({
                 (value) => !value
               )
             }
-            className="absolute -right-3 top-[26px] hidden h-7 w-7 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-slate-300 shadow-lg transition-all duration-200 hover:border-blue-500/50 hover:bg-blue-600 hover:text-white lg:flex"
+            className="
+              absolute
+              -right-3
+              top-[26px]
+              hidden
+              h-7
+              w-7
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-slate-200
+              bg-white
+              text-slate-600
+              shadow-lg
+              transition-all
+              duration-200
+              hover:border-blue-500/40
+              hover:bg-blue-600
+              hover:text-white
+
+              dark:border-slate-700
+              dark:bg-slate-900
+              dark:text-slate-300
+
+              lg:flex
+            "
             aria-label={
               collapsed
                 ? "Expand sidebar"
@@ -321,20 +486,51 @@ export default function Sidebar({
             }
           >
             {collapsed ? (
-              <ChevronRight size={16} />
+              <ChevronRight
+                size={16}
+              />
             ) : (
-              <ChevronLeft size={16} />
+              <ChevronLeft
+                size={16}
+              />
             )}
           </button>
 
-          {/* MOBILE CLOSE BUTTON */}
+          {/* =================================================
+              MOBILE CLOSE BUTTON
+             ================================================= */}
 
           <button
             type="button"
             onClick={() =>
               setMobileOpen(false)
             }
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition-all duration-200 hover:border-red-400/30 hover:bg-red-500/10 hover:text-red-400 lg:hidden"
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-slate-200
+              bg-slate-50
+              text-slate-500
+              transition-all
+              duration-200
+              hover:border-red-400/30
+              hover:bg-red-50
+              hover:text-red-500
+
+              dark:border-slate-800
+              dark:bg-slate-900
+              dark:text-slate-400
+              dark:hover:bg-red-500/10
+              dark:hover:text-red-400
+
+              lg:hidden
+            "
             aria-label="Close sidebar"
           >
             <X size={19} />
@@ -343,11 +539,30 @@ export default function Sidebar({
 
         {/* ===================================================
             MENU
-        =================================================== */}
+           =================================================== */}
 
-        <div className="flex-1 overflow-y-auto px-3 py-6">
+        <div
+          className="
+            flex-1
+            overflow-y-auto
+            px-3
+            py-6
+          "
+        >
           {!collapsed && (
-            <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            <p
+              className="
+                mb-3
+                px-3
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-[0.18em]
+                text-slate-400
+
+                dark:text-slate-500
+              "
+            >
               Main Menu
             </p>
           )}
@@ -361,37 +576,95 @@ export default function Sidebar({
                   key={item.name}
                   to={item.path}
                   end={item.path === "/"}
-                  onClick={handleNavigation}
+                  onClick={
+                    handleNavigation
+                  }
                   title={
                     collapsed
                       ? item.name
                       : undefined
                   }
-                  className={({ isActive }) =>
-                    `group relative flex h-11 w-full items-center rounded-xl text-sm font-semibold transition-all duration-200 ${
-                      collapsed
-                        ? "justify-center"
-                        : "gap-3 px-3.5"
-                    } ${
-                      isActive
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/20"
-                        : "text-slate-400 hover:bg-slate-900 hover:text-white"
-                    }`
+                  className={({
+                    isActive,
+                  }) =>
+                    `
+                      group
+                      relative
+                      flex
+                      h-11
+                      w-full
+                      items-center
+                      rounded-xl
+                      text-sm
+                      font-semibold
+                      transition-all
+                      duration-200
+
+                      ${
+                        collapsed
+                          ? "justify-center"
+                          : "gap-3 px-3.5"
+                      }
+
+                      ${
+                        isActive
+                          ? `
+                            bg-gradient-to-r
+                            from-blue-600
+                            to-indigo-600
+                            text-white
+                            shadow-lg
+                            shadow-blue-600/20
+                          `
+                          : `
+                            text-slate-600
+                            hover:bg-slate-100
+                            hover:text-slate-900
+
+                            dark:text-slate-400
+                            dark:hover:bg-slate-900
+                            dark:hover:text-white
+                          `
+                      }
+                    `
                   }
                 >
                   {({ isActive }) => (
                     <>
+                      {/* Active indicator */}
+
                       {isActive && (
-                        <span className="absolute left-0 h-6 w-1 rounded-r-full bg-cyan-300" />
+                        <span
+                          className="
+                            absolute
+                            left-0
+                            h-6
+                            w-1
+                            rounded-r-full
+                            bg-cyan-300
+                          "
+                        />
                       )}
 
                       <Icon
                         size={19}
-                        className={`shrink-0 transition-transform duration-200 ${
-                          isActive
-                            ? "text-white"
-                            : "text-slate-500 group-hover:text-blue-400"
-                        }`}
+                        className={`
+                          shrink-0
+                          transition-transform
+                          duration-200
+
+                          ${
+                            isActive
+                              ? "text-white"
+                              : `
+                                text-slate-400
+                                group-hover:text-blue-600
+
+                                dark:text-slate-500
+                                dark:group-hover:text-blue-400
+                              `
+                          }
+                        `}
                       />
 
                       {!collapsed && (
@@ -400,10 +673,38 @@ export default function Sidebar({
                         </span>
                       )}
 
-                      {/* COLLAPSED TOOLTIP */}
+                      {/* =================================================
+                          COLLAPSED TOOLTIP
+                         ================================================= */}
 
                       {collapsed && (
-                        <span className="pointer-events-none absolute left-[68px] z-[100] whitespace-nowrap rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+                        <span
+                          className="
+                            pointer-events-none
+                            absolute
+                            left-[68px]
+                            z-[100]
+                            whitespace-nowrap
+                            rounded-lg
+                            border
+                            border-slate-200
+                            bg-white
+                            px-3
+                            py-2
+                            text-xs
+                            font-semibold
+                            text-slate-900
+                            opacity-0
+                            shadow-xl
+                            transition-opacity
+                            duration-200
+                            group-hover:opacity-100
+
+                            dark:border-slate-700
+                            dark:bg-slate-900
+                            dark:text-white
+                          "
+                        >
                           {item.name}
                         </span>
                       )}
@@ -417,21 +718,52 @@ export default function Sidebar({
 
         {/* ===================================================
             BOTTOM SECTION
-        =================================================== */}
+           =================================================== */}
 
-        <div className="shrink-0 border-t border-slate-800 p-3">
+        <div
+          className="
+            shrink-0
+            border-t
+            border-slate-200
+            p-3
+
+            dark:border-slate-800
+          "
+        >
           {/* =================================================
               ADMIN PROFILE
-          ================================================= */}
+             ================================================= */}
 
           <button
             type="button"
-            onClick={handleProfileClick}
-            className={`group mb-2 flex w-full items-center rounded-xl border border-slate-800 bg-slate-900/70 transition-all duration-200 hover:border-blue-500/30 hover:bg-slate-900 ${
-              collapsed
-                ? "justify-center p-2"
-                : "gap-3 p-3"
-            }`}
+            onClick={
+              handleProfileClick
+            }
+            className={`
+              group
+              mb-2
+              flex
+              w-full
+              items-center
+              rounded-xl
+              border
+              border-slate-200
+              bg-slate-50
+              transition-all
+              duration-200
+              hover:border-blue-500/30
+              hover:bg-white
+
+              dark:border-slate-800
+              dark:bg-slate-900/70
+              dark:hover:bg-slate-900
+
+              ${
+                collapsed
+                  ? "justify-center p-2"
+                  : "gap-3 p-3"
+              }
+            `}
             title={
               collapsed
                 ? `${profile.name} - ${profile.role}`
@@ -464,7 +796,11 @@ export default function Sidebar({
                   <img
                     src={profile.image}
                     alt={`${profile.name} profile`}
-                    className="h-full w-full object-cover"
+                    className="
+                      h-full
+                      w-full
+                      object-cover
+                    "
                   />
                 ) : (
                   <span>
@@ -484,10 +820,12 @@ export default function Sidebar({
                   w-3
                   rounded-full
                   border-2
-                  border-slate-900
+                  border-white
                   bg-emerald-400
                   shadow-lg
                   shadow-emerald-400/40
+
+                  dark:border-slate-900
                 "
               />
             </div>
@@ -497,32 +835,84 @@ export default function Sidebar({
             {!collapsed && (
               <>
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="truncate text-sm font-bold text-white">
+                  <p
+                    className="
+                      truncate
+                      text-sm
+                      font-bold
+                      text-slate-900
+
+                      dark:text-white
+                    "
+                  >
                     {profile.name}
                   </p>
 
-                  <p className="truncate text-xs text-slate-500">
+                  <p
+                    className="
+                      truncate
+                      text-xs
+                      font-medium
+                      text-slate-500
+
+                      dark:text-slate-500
+                    "
+                  >
                     {profile.role}
                   </p>
                 </div>
 
-                <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50" />
+                <span
+                  className="
+                    ml-auto
+                    h-2
+                    w-2
+                    shrink-0
+                    rounded-full
+                    bg-emerald-400
+                    shadow-lg
+                    shadow-emerald-400/50
+                  "
+                />
               </>
             )}
           </button>
 
           {/* =================================================
               LOGOUT
-          ================================================= */}
+             ================================================= */}
 
           <button
             type="button"
-            onClick={handleLogout}
-            className={`group relative flex h-11 w-full items-center rounded-xl text-sm font-semibold text-slate-400 transition-all duration-200 hover:bg-red-500/10 hover:text-red-400 ${
-              collapsed
-                ? "justify-center"
-                : "gap-3 px-3.5"
-            }`}
+            onClick={
+              handleLogout
+            }
+            className={`
+              group
+              relative
+              flex
+              h-11
+              w-full
+              items-center
+              rounded-xl
+              text-sm
+              font-semibold
+              text-slate-500
+              transition-all
+              duration-200
+              hover:bg-red-50
+              hover:text-red-500
+
+              dark:text-slate-400
+              dark:hover:bg-red-500/10
+              dark:hover:text-red-400
+
+              ${
+                collapsed
+                  ? "justify-center"
+                  : "gap-3 px-3.5"
+              }
+            `}
             title={
               collapsed
                 ? "Logout"
@@ -531,7 +921,12 @@ export default function Sidebar({
           >
             <LogOut
               size={19}
-              className="shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5"
+              className="
+                shrink-0
+                transition-transform
+                duration-200
+                group-hover:-translate-x-0.5
+              "
             />
 
             {!collapsed && (
@@ -541,7 +936,33 @@ export default function Sidebar({
             )}
 
             {collapsed && (
-              <span className="pointer-events-none absolute left-[68px] z-[100] whitespace-nowrap rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+              <span
+                className="
+                  pointer-events-none
+                  absolute
+                  left-[68px]
+                  z-[100]
+                  whitespace-nowrap
+                  rounded-lg
+                  border
+                  border-slate-200
+                  bg-white
+                  px-3
+                  py-2
+                  text-xs
+                  font-semibold
+                  text-slate-900
+                  opacity-0
+                  shadow-xl
+                  transition-opacity
+                  duration-200
+                  group-hover:opacity-100
+
+                  dark:border-slate-700
+                  dark:bg-slate-900
+                  dark:text-white
+                "
+              >
                 Logout
               </span>
             )}

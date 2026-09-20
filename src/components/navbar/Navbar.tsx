@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import {
   Bell,
   ChevronDown,
@@ -12,6 +17,7 @@ import {
   Settings,
   User,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -41,43 +47,50 @@ const PROFILE_UPDATED_EVENT =
 const searchItems: SearchItem[] = [
   {
     title: "Dashboard",
-    description: "Store overview and business statistics",
+    description:
+      "Store overview and business statistics",
     path: "/",
     icon: LayoutDashboard,
   },
   {
     title: "Products",
-    description: "Manage products and inventory",
+    description:
+      "Manage products and inventory",
     path: "/products",
     icon: Package,
   },
   {
     title: "Orders",
-    description: "Manage customer orders",
+    description:
+      "Manage customer orders",
     path: "/orders",
     icon: ShoppingCart,
   },
   {
     title: "Customers",
-    description: "Manage customers and profiles",
+    description:
+      "Manage customers and profiles",
     path: "/customers",
     icon: Users,
   },
   {
     title: "Analytics",
-    description: "View business performance",
+    description:
+      "View business performance",
     path: "/analytics",
     icon: BarChart3,
   },
   {
     title: "Settings",
-    description: "Manage application settings",
+    description:
+      "Manage application settings",
     path: "/settings",
     icon: Settings,
   },
   {
     title: "Profile",
-    description: "Manage your administrator profile",
+    description:
+      "Manage your administrator profile",
     path: "/profile",
     icon: User,
   },
@@ -102,8 +115,10 @@ export default function Navbar({
   const [searchOpen, setSearchOpen] =
     useState(false);
 
-  const [notificationsOpen, setNotificationsOpen] =
-    useState(false);
+  const [
+    notificationsOpen,
+    setNotificationsOpen,
+  ] = useState(false);
 
   const [profile, setProfile] =
     useState<ProfileData>({
@@ -112,9 +127,9 @@ export default function Navbar({
       image: "",
     });
 
-  /* =====================================================
-     LOAD PROFILE
-     ===================================================== */
+  // =====================================================
+  // LOAD PROFILE
+  // =====================================================
 
   useEffect(() => {
     const loadProfile = () => {
@@ -124,21 +139,18 @@ export default function Navbar({
             PROFILE_STORAGE_KEY
           );
 
-        if (!savedProfile) return;
+        if (!savedProfile) {
+          return;
+        }
 
-        const data = JSON.parse(
-          savedProfile
-        );
+        const data = JSON.parse(savedProfile);
 
         setProfile({
-          name:
-            data.name ||
-            "Rohith.S",
+          name: data.name || "Rohith.S",
           email:
             data.email ||
             "rohithbecsc@gmail.com",
-          image:
-            data.image || "",
+          image: data.image || "",
         });
       } catch (error) {
         console.error(
@@ -177,9 +189,9 @@ export default function Navbar({
     };
   }, []);
 
-  /* =====================================================
-     CLOSE SEARCH WHEN CLICKING OUTSIDE
-     ===================================================== */
+  // =====================================================
+  // CLOSE SEARCH WHEN CLICKING OUTSIDE
+  // =====================================================
 
   useEffect(() => {
     const handleOutsideClick = (
@@ -208,13 +220,13 @@ export default function Navbar({
     };
   }, []);
 
-  /* =====================================================
-     ESCAPE KEY
-     ===================================================== */
+  // =====================================================
+  // ESCAPE KEY
+  // =====================================================
 
   useEffect(() => {
     const handleEscape = (
-      event: KeyboardEvent
+      event: globalThis.KeyboardEvent
     ) => {
       if (event.key === "Escape") {
         setSearchOpen(false);
@@ -236,9 +248,9 @@ export default function Navbar({
     };
   }, []);
 
-  /* =====================================================
-     SEARCH RESULTS
-     ===================================================== */
+  // =====================================================
+  // SEARCH RESULTS
+  // =====================================================
 
   const filteredResults =
     searchQuery.trim()
@@ -259,9 +271,9 @@ export default function Navbar({
         })
       : [];
 
-  /* =====================================================
-     SEARCH RESULT CLICK
-     ===================================================== */
+  // =====================================================
+  // SEARCH RESULT CLICK
+  // =====================================================
 
   const handleSearchResult = (
     path: string
@@ -272,9 +284,9 @@ export default function Navbar({
     setSearchOpen(false);
   };
 
-  /* =====================================================
-     SEARCH KEYBOARD
-     ===================================================== */
+  // =====================================================
+  // SEARCH KEYBOARD
+  // =====================================================
 
   const handleSearchKeyDown = (
     event: React.KeyboardEvent<HTMLInputElement>
@@ -293,9 +305,9 @@ export default function Navbar({
     }
   };
 
-  /* =====================================================
-     PROFILE INITIAL
-     ===================================================== */
+  // =====================================================
+  // PROFILE INITIAL
+  // =====================================================
 
   const profileInitial =
     profile.name
@@ -312,11 +324,19 @@ export default function Navbar({
         z-50
         h-16
         border-b
-        border-slate-800/80
-        bg-slate-950/95
+        border-slate-200
+        bg-white/95
+        text-slate-900
+        shadow-sm
         backdrop-blur-xl
         transition-all
         duration-300
+
+        dark:border-slate-800/80
+        dark:bg-slate-950/95
+        dark:text-white
+        dark:shadow-none
+
         ${
           sidebarCollapsed
             ? "left-[76px]"
@@ -345,10 +365,19 @@ export default function Navbar({
             justify-center
             rounded-xl
             border
-            border-slate-700
-            text-slate-300
+            border-slate-200
+            bg-slate-50
+            text-slate-600
             transition
-            hover:bg-slate-800
+            hover:bg-slate-100
+            hover:text-slate-900
+
+            dark:border-slate-700
+            dark:bg-transparent
+            dark:text-slate-300
+            dark:hover:bg-slate-800
+            dark:hover:text-white
+
             lg:hidden
           "
           aria-label="Open sidebar"
@@ -368,17 +397,31 @@ export default function Navbar({
             lg:block
           "
         >
-          <h1 className="text-sm font-bold text-white">
+          <h1
+            className="
+              text-sm
+              font-bold
+              text-slate-900
+              dark:text-white
+            "
+          >
             TAGITStore
           </h1>
 
-          <p className="text-[10px] text-slate-400">
+          <p
+            className="
+              text-[10px]
+              font-medium
+              text-slate-500
+              dark:text-slate-400
+            "
+          >
             {t("enterpriseDashboard")}
           </p>
         </div>
 
         {/* =================================================
-            SEARCH AREA
+            SEARCH
             ================================================= */}
 
         <div
@@ -401,10 +444,26 @@ export default function Navbar({
               px-3
               transition-all
               duration-200
+
               ${
                 searchOpen
-                  ? "border-indigo-500 bg-slate-900 shadow-lg shadow-indigo-500/10"
-                  : "border-slate-700 bg-slate-900/70 hover:border-slate-600"
+                  ? `
+                    border-indigo-500
+                    bg-white
+                    shadow-lg
+                    shadow-indigo-500/10
+
+                    dark:bg-slate-900
+                  `
+                  : `
+                    border-slate-200
+                    bg-slate-50
+                    hover:border-slate-300
+
+                    dark:border-slate-700
+                    dark:bg-slate-900/70
+                    dark:hover:border-slate-600
+                  `
               }
             `}
           >
@@ -414,10 +473,11 @@ export default function Navbar({
                 h-4
                 w-4
                 shrink-0
+
                 ${
                   searchOpen
-                    ? "text-indigo-400"
-                    : "text-slate-400"
+                    ? "text-indigo-500 dark:text-indigo-400"
+                    : "text-slate-500 dark:text-slate-400"
                 }
               `}
             />
@@ -443,9 +503,13 @@ export default function Navbar({
                 flex-1
                 bg-transparent
                 text-sm
-                text-white
+                font-medium
+                text-slate-900
                 outline-none
-                placeholder:text-slate-500
+                placeholder:text-slate-400
+
+                dark:text-white
+                dark:placeholder:text-slate-500
               "
             />
 
@@ -454,6 +518,7 @@ export default function Navbar({
                 type="button"
                 onClick={() => {
                   setSearchQuery("");
+
                   searchInputRef.current?.focus();
                 }}
                 className="
@@ -465,10 +530,14 @@ export default function Navbar({
                   items-center
                   justify-center
                   rounded-md
-                  text-slate-400
+                  text-slate-500
                   transition
-                  hover:bg-slate-800
-                  hover:text-white
+                  hover:bg-slate-200
+                  hover:text-slate-900
+
+                  dark:text-slate-400
+                  dark:hover:bg-slate-800
+                  dark:hover:text-white
                 "
                 aria-label="Clear search"
               >
@@ -483,13 +552,18 @@ export default function Navbar({
                 shrink-0
                 rounded-md
                 border
-                border-slate-700
-                bg-slate-800
+                border-slate-200
+                bg-white
                 px-2
                 py-1
                 text-[9px]
-                font-semibold
-                text-slate-400
+                font-bold
+                text-slate-500
+
+                dark:border-slate-700
+                dark:bg-slate-800
+                dark:text-slate-400
+
                 md:block
               "
             >
@@ -513,17 +587,28 @@ export default function Navbar({
                   overflow-hidden
                   rounded-2xl
                   border
-                  border-slate-700
-                  bg-slate-900
+                  border-slate-200
+                  bg-white
                   shadow-2xl
-                  shadow-black/40
+                  shadow-slate-900/10
+
+                  dark:border-slate-700
+                  dark:bg-slate-900
+                  dark:shadow-black/40
                 "
               >
                 {filteredResults.length > 0 ? (
                   <div className="max-h-[330px] overflow-y-auto p-2">
-
                     <div className="px-3 py-2">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <p
+                        className="
+                          text-[10px]
+                          font-bold
+                          uppercase
+                          tracking-wider
+                          text-slate-500
+                        "
+                      >
                         Search results
                       </p>
                     </div>
@@ -550,7 +635,9 @@ export default function Navbar({
                               p-3
                               text-left
                               transition
-                              hover:bg-slate-800
+                              hover:bg-slate-100
+
+                              dark:hover:bg-slate-800
                             "
                           >
                             <div
@@ -562,23 +649,54 @@ export default function Navbar({
                                 items-center
                                 justify-center
                                 rounded-lg
-                                bg-indigo-500/10
+                                bg-indigo-50
+
+                                dark:bg-indigo-500/10
                               "
                             >
-                              <Icon className="h-4 w-4 text-indigo-400" />
+                              <Icon
+                                className="
+                                  h-4
+                                  w-4
+                                  text-indigo-600
+
+                                  dark:text-indigo-400
+                                "
+                              />
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-white">
+                              <p
+                                className="
+                                  text-sm
+                                  font-semibold
+                                  text-slate-900
+
+                                  dark:text-white
+                                "
+                              >
                                 {item.title}
                               </p>
 
-                              <p className="truncate text-xs text-slate-400">
+                              <p
+                                className="
+                                  truncate
+                                  text-xs
+                                  text-slate-500
+
+                                  dark:text-slate-400
+                                "
+                              >
                                 {item.description}
                               </p>
                             </div>
 
-                            <span className="text-slate-500">
+                            <span
+                              className="
+                                text-slate-400
+                                dark:text-slate-500
+                              "
+                            >
                               →
                             </span>
                           </button>
@@ -598,17 +716,41 @@ export default function Navbar({
                         items-center
                         justify-center
                         rounded-full
-                        bg-slate-800
+                        bg-slate-100
+
+                        dark:bg-slate-800
                       "
                     >
-                      <Search className="h-5 w-5 text-slate-500" />
+                      <Search
+                        className="
+                          h-5
+                          w-5
+                          text-slate-400
+
+                          dark:text-slate-500
+                        "
+                      />
                     </div>
 
-                    <p className="text-sm font-semibold text-white">
+                    <p
+                      className="
+                        text-sm
+                        font-semibold
+                        text-slate-900
+
+                        dark:text-white
+                      "
+                    >
                       No results found
                     </p>
 
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p
+                      className="
+                        mt-1
+                        text-xs
+                        text-slate-500
+                      "
+                    >
                       Try another search
                     </p>
                   </div>
@@ -632,7 +774,7 @@ export default function Navbar({
         >
 
           {/* =================================================
-              NOTIFICATION
+              NOTIFICATIONS
               ================================================= */}
 
           <div className="relative">
@@ -652,10 +794,14 @@ export default function Navbar({
                 items-center
                 justify-center
                 rounded-xl
-                text-slate-400
+                text-slate-500
                 transition
-                hover:bg-slate-800
-                hover:text-white
+                hover:bg-slate-100
+                hover:text-slate-900
+
+                dark:text-slate-400
+                dark:hover:bg-slate-800
+                dark:hover:text-white
               "
               aria-label="Notifications"
             >
@@ -671,7 +817,9 @@ export default function Navbar({
                   rounded-full
                   bg-red-500
                   ring-2
-                  ring-slate-950
+                  ring-white
+
+                  dark:ring-slate-950
                 "
               />
             </button>
@@ -689,10 +837,14 @@ export default function Navbar({
                   overflow-hidden
                   rounded-2xl
                   border
-                  border-slate-700
-                  bg-slate-900
+                  border-slate-200
+                  bg-white
                   shadow-2xl
-                  shadow-black/40
+                  shadow-slate-900/10
+
+                  dark:border-slate-700
+                  dark:bg-slate-900
+                  dark:shadow-black/40
                 "
               >
                 <div
@@ -701,24 +853,37 @@ export default function Navbar({
                     items-center
                     justify-between
                     border-b
-                    border-slate-800
+                    border-slate-200
                     px-4
                     py-3
+
+                    dark:border-slate-800
                   "
                 >
-                  <h3 className="text-sm font-bold text-white">
+                  <h3
+                    className="
+                      text-sm
+                      font-bold
+                      text-slate-900
+
+                      dark:text-white
+                    "
+                  >
                     {t("notifications")}
                   </h3>
 
                   <span
                     className="
                       rounded-full
-                      bg-indigo-500/10
+                      bg-indigo-50
                       px-2
                       py-1
                       text-[10px]
                       font-bold
-                      text-indigo-400
+                      text-indigo-600
+
+                      dark:bg-indigo-500/10
+                      dark:text-indigo-400
                     "
                   >
                     3 New
@@ -726,7 +891,6 @@ export default function Navbar({
                 </div>
 
                 <div className="p-2">
-
                   <NotificationItem
                     dot="bg-indigo-500"
                     title={t(
@@ -756,10 +920,17 @@ export default function Navbar({
                       "lowStockMessage"
                     )}
                   />
-
                 </div>
 
-                <div className="border-t border-slate-800 p-2">
+                <div
+                  className="
+                    border-t
+                    border-slate-200
+                    p-2
+
+                    dark:border-slate-800
+                  "
+                >
                   <button
                     type="button"
                     onClick={() =>
@@ -774,9 +945,12 @@ export default function Navbar({
                       py-2
                       text-xs
                       font-semibold
-                      text-indigo-400
+                      text-indigo-600
                       transition
-                      hover:bg-indigo-500/10
+                      hover:bg-indigo-50
+
+                      dark:text-indigo-400
+                      dark:hover:bg-indigo-500/10
                     "
                   >
                     {t("markAllAsRead")}
@@ -802,11 +976,11 @@ export default function Navbar({
               rounded-xl
               p-1.5
               transition
-              hover:bg-slate-800
+              hover:bg-slate-100
+
+              dark:hover:bg-slate-800
             "
           >
-            {/* Profile image */}
-
             {profile.image ? (
               <img
                 src={profile.image}
@@ -841,8 +1015,6 @@ export default function Navbar({
               </div>
             )}
 
-            {/* Name */}
-
             <div
               className="
                 hidden
@@ -851,11 +1023,29 @@ export default function Navbar({
                 xl:block
               "
             >
-              <p className="max-w-[100px] truncate text-xs font-bold text-white">
+              <p
+                className="
+                  max-w-[100px]
+                  truncate
+                  text-xs
+                  font-bold
+                  text-slate-900
+
+                  dark:text-white
+                "
+              >
                 {profile.name}
               </p>
 
-              <p className="text-[10px] text-slate-400">
+              <p
+                className="
+                  text-[10px]
+                  font-medium
+                  text-slate-500
+
+                  dark:text-slate-400
+                "
+              >
                 {t("administrator")}
               </p>
             </div>
@@ -865,7 +1055,10 @@ export default function Navbar({
                 hidden
                 h-4
                 w-4
-                text-slate-500
+                text-slate-400
+
+                dark:text-slate-500
+
                 xl:block
               "
             />
@@ -900,7 +1093,9 @@ function NotificationItem({
         p-3
         text-left
         transition
-        hover:bg-slate-800
+        hover:bg-slate-100
+
+        dark:hover:bg-slate-800
       "
     >
       <span
@@ -915,11 +1110,28 @@ function NotificationItem({
       />
 
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-white">
+        <p
+          className="
+            text-sm
+            font-semibold
+            text-slate-900
+
+            dark:text-white
+          "
+        >
           {title}
         </p>
 
-        <p className="mt-1 text-xs leading-5 text-slate-400">
+        <p
+          className="
+            mt-1
+            text-xs
+            leading-5
+            text-slate-500
+
+            dark:text-slate-400
+          "
+        >
           {message}
         </p>
       </div>
