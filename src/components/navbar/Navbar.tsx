@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Search,
   X,
+  Menu,
   LayoutDashboard,
   Package,
   ShoppingCart,
@@ -143,14 +144,17 @@ export default function Navbar({
           return;
         }
 
-        const data = JSON.parse(savedProfile);
+        const data =
+          JSON.parse(savedProfile);
 
         setProfile({
-          name: data.name || "Rohith.S",
+          name:
+            data.name || "Rohith.S",
           email:
             data.email ||
             "rohithbecsc@gmail.com",
-          image: data.image || "",
+          image:
+            data.image || "",
         });
       } catch (error) {
         console.error(
@@ -221,11 +225,11 @@ export default function Navbar({
   }, []);
 
   // =====================================================
-  // ESCAPE KEY
+  // ESCAPE KEY + CTRL K
   // =====================================================
 
   useEffect(() => {
-    const handleEscape = (
+    const handleKeyboard = (
       event: globalThis.KeyboardEvent
     ) => {
       if (event.key === "Escape") {
@@ -233,17 +237,30 @@ export default function Navbar({
         setNotificationsOpen(false);
         setSearchQuery("");
       }
+
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "k"
+      ) {
+        event.preventDefault();
+
+        setSearchOpen(true);
+
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 0);
+      }
     };
 
     document.addEventListener(
       "keydown",
-      handleEscape
+      handleKeyboard
     );
 
     return () => {
       document.removeEventListener(
         "keydown",
-        handleEscape
+        handleKeyboard
       );
     };
   }, []);
@@ -292,7 +309,9 @@ export default function Navbar({
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === "Enter") {
-      if (filteredResults.length > 0) {
+      if (
+        filteredResults.length > 0
+      ) {
         handleSearchResult(
           filteredResults[0].path
         );
@@ -319,8 +338,9 @@ export default function Navbar({
     <header
       className={`
         fixed
-        top-0
+        left-0
         right-0
+        top-0
         z-50
         h-16
         border-b
@@ -339,16 +359,16 @@ export default function Navbar({
 
         ${
           sidebarCollapsed
-            ? "left-[76px]"
-            : "left-64"
+            ? "lg:left-[76px]"
+            : "lg:left-64"
         }
       `}
     >
-      <div className="flex h-full w-full items-center px-4 sm:px-5">
+      <div className="flex h-full w-full min-w-0 items-center px-3 sm:px-5">
 
         {/* =================================================
             MOBILE MENU
-            ================================================= */}
+        ================================================= */}
 
         <button
           type="button"
@@ -356,7 +376,7 @@ export default function Navbar({
             setMobileSidebarOpen(true)
           }
           className="
-            mr-3
+            mr-2
             flex
             h-10
             w-10
@@ -373,7 +393,7 @@ export default function Navbar({
             hover:text-slate-900
 
             dark:border-slate-700
-            dark:bg-transparent
+            dark:bg-slate-900
             dark:text-slate-300
             dark:hover:bg-slate-800
             dark:hover:text-white
@@ -382,12 +402,12 @@ export default function Navbar({
           "
           aria-label="Open sidebar"
         >
-          ☰
+          <Menu className="h-5 w-5" />
         </button>
 
         {/* =================================================
             BRAND
-            ================================================= */}
+        ================================================= */}
 
         <div
           className="
@@ -422,21 +442,23 @@ export default function Navbar({
 
         {/* =================================================
             SEARCH
-            ================================================= */}
+        ================================================= */}
 
         <div
           ref={searchContainerRef}
           className="
             relative
-            mx-3
+            mx-1.5
             min-w-0
             flex-1
+            sm:mx-3
           "
         >
           <div
             className={`
               flex
               h-10
+              min-w-0
               w-full
               items-center
               rounded-xl
@@ -452,14 +474,12 @@ export default function Navbar({
                     bg-white
                     shadow-lg
                     shadow-indigo-500/10
-
                     dark:bg-slate-900
                   `
                   : `
                     border-slate-200
                     bg-slate-50
                     hover:border-slate-300
-
                     dark:border-slate-700
                     dark:bg-slate-900/70
                     dark:hover:border-slate-600
@@ -522,7 +542,7 @@ export default function Navbar({
                   searchInputRef.current?.focus();
                 }}
                 className="
-                  ml-2
+                  ml-1
                   flex
                   h-6
                   w-6
@@ -573,7 +593,7 @@ export default function Navbar({
 
           {/* =================================================
               SEARCH DROPDOWN
-              ================================================= */}
+          ================================================= */}
 
           {searchOpen &&
             searchQuery.trim() && (
@@ -597,7 +617,8 @@ export default function Navbar({
                   dark:shadow-black/40
                 "
               >
-                {filteredResults.length > 0 ? (
+                {filteredResults.length >
+                0 ? (
                   <div className="max-h-[330px] overflow-y-auto p-2">
                     <div className="px-3 py-2">
                       <p
@@ -615,11 +636,14 @@ export default function Navbar({
 
                     {filteredResults.map(
                       (item) => {
-                        const Icon = item.icon;
+                        const Icon =
+                          item.icon;
 
                         return (
                           <button
-                            key={item.path}
+                            key={
+                              item.path
+                            }
                             type="button"
                             onClick={() =>
                               handleSearchResult(
@@ -687,7 +711,9 @@ export default function Navbar({
                                   dark:text-slate-400
                                 "
                               >
-                                {item.description}
+                                {
+                                  item.description
+                                }
                               </p>
                             </div>
 
@@ -744,13 +770,7 @@ export default function Navbar({
                       No results found
                     </p>
 
-                    <p
-                      className="
-                        mt-1
-                        text-xs
-                        text-slate-500
-                      "
-                    >
+                    <p className="mt-1 text-xs text-slate-500">
                       Try another search
                     </p>
                   </div>
@@ -761,21 +781,20 @@ export default function Navbar({
 
         {/* =================================================
             RIGHT SIDE
-            ================================================= */}
+        ================================================= */}
 
         <div
           className="
             flex
             shrink-0
             items-center
-            gap-1
+            gap-0.5
             sm:gap-2
           "
         >
-
           {/* =================================================
               NOTIFICATIONS
-              ================================================= */}
+          ================================================= */}
 
           <div className="relative">
             <button
@@ -791,6 +810,7 @@ export default function Navbar({
                 flex
                 h-10
                 w-10
+                shrink-0
                 items-center
                 justify-center
                 rounded-xl
@@ -834,6 +854,7 @@ export default function Navbar({
                   top-12
                   z-[100]
                   w-[310px]
+                  max-w-[calc(100vw-24px)]
                   overflow-hidden
                   rounded-2xl
                   border
@@ -962,7 +983,7 @@ export default function Navbar({
 
           {/* =================================================
               PROFILE
-              ================================================= */}
+          ================================================= */}
 
           <button
             type="button"
@@ -971,15 +992,18 @@ export default function Navbar({
             }
             className="
               flex
+              h-10
+              shrink-0
               items-center
               gap-2
               rounded-xl
-              p-1.5
+              p-1
               transition
               hover:bg-slate-100
 
               dark:hover:bg-slate-800
             "
+            aria-label="Open profile"
           >
             {profile.image ? (
               <img
@@ -1000,6 +1024,7 @@ export default function Navbar({
                   flex
                   h-9
                   w-9
+                  shrink-0
                   items-center
                   justify-center
                   rounded-xl
@@ -1069,9 +1094,9 @@ export default function Navbar({
   );
 }
 
-/* =========================================================
-   NOTIFICATION ITEM
-   ========================================================= */
+// =========================================================
+// NOTIFICATION ITEM
+// =========================================================
 
 function NotificationItem({
   dot,
