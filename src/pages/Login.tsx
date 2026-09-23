@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   Eye,
   EyeOff,
@@ -9,14 +10,21 @@ import {
   Chrome,
   CheckCircle2,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
 import toast from "react-hot-toast";
 
 import {
   GoogleAuthProvider,
+  getRedirectResult,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
-  sendPasswordResetEmail,
+  signInWithRedirect,
 } from "firebase/auth";
 
 import { auth } from "../firebase";
@@ -94,13 +102,19 @@ export default function Login() {
         return "Google sign-in was cancelled.";
 
       case "auth/popup-blocked":
-        return "Your browser blocked the Google sign-in popup.";
+        return "Google popup was blocked. Switching to redirect sign-in.";
+
+      case "auth/popup-cancelled-by-user":
+        return "Google sign-in was cancelled.";
 
       case "auth/unauthorized-domain":
         return "This website domain is not authorized in Firebase.";
 
       case "auth/account-exists-with-different-credential":
         return "An account already exists with a different sign-in method.";
+
+      case "auth/network-request-failed":
+        return "Network error. Please check your internet connection.";
 
       default:
         return (
@@ -109,6 +123,53 @@ export default function Login() {
         );
     }
   };
+
+  // =========================================================
+  // CHECK GOOGLE REDIRECT RESULT
+  // =========================================================
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkRedirectResult =
+      async () => {
+        try {
+          const result =
+            await getRedirectResult(
+              auth
+            );
+
+          if (!mounted) return;
+
+          if (result?.user) {
+            toast.success(
+              "Google login successful!"
+            );
+
+            navigate("/", {
+              replace: true,
+            });
+          }
+        } catch (error) {
+          console.error(
+            "Google redirect login error:",
+            error
+          );
+
+          if (!mounted) return;
+
+          toast.error(
+            getAuthErrorMessage(error)
+          );
+        }
+      };
+
+    void checkRedirectResult();
+
+    return () => {
+      mounted = false;
+    };
+  }, [navigate]);
 
   // =========================================================
   // EMAIL LOGIN
@@ -215,7 +276,9 @@ export default function Login() {
             code?: string;
           };
 
-        switch (firebaseError.code) {
+        switch (
+          firebaseError.code
+        ) {
           case "auth/invalid-email":
             toast.error(
               "Please enter a valid email address."
@@ -256,28 +319,91 @@ export default function Login() {
           prompt: "select_account",
         });
 
-        await signInWithPopup(
-          auth,
-          provider
-        );
+        /*
+         * Use redirect on smaller screens.
+         *
+         * This is better for mobile browsers where
+         * popup windows can be blocked or restricted.
+         */
+        const isMobile =
+          window.matchMedia(
+            "(max-width: 1023px)"
+          ).matches;
 
-        toast.success(
-          "Google login successful!"
-        );
+        if (isMobile) {
+          await signInWithRedirect(
+            auth,
+            provider
+          );
 
-        navigate("/", {
-          replace: true,
-        });
+          return;
+        }
+
+        /*
+         * Desktop: use popup.
+         */
+        try {
+          await signInWithPopup(
+            auth,
+            provider
+          );
+
+          toast.success(
+            "Google login successful!"
+          );
+
+          navigate("/", {
+            replace: true,
+          });
+        } catch (popupError) {
+          const popupErrorCode =
+            (
+              popupError as {
+                code?: string;
+              }
+            )?.code;
+
+          /*
+           * If the browser blocks the popup,
+           * automatically try redirect.
+           */
+          if (
+            popupErrorCode ===
+              "auth/popup-blocked" ||
+            popupErrorCode ===
+              "auth/popup-cancelled-by-user"
+          ) {
+            toast.loading(
+              "Opening Google sign-in...",
+              {
+                id: "google-redirect",
+              }
+            );
+
+            await signInWithRedirect(
+              auth,
+              provider
+            );
+
+            return;
+          }
+
+          throw popupError;
+        }
       } catch (error) {
         console.error(
           "Google login error:",
           error
         );
 
+        toast.dismiss(
+          "google-redirect"
+        );
+
         toast.error(
           getAuthErrorMessage(error)
         );
-      } finally {
+
         setGoogleLoading(false);
       }
     };
@@ -289,9 +415,7 @@ export default function Login() {
   const handleKeyDown = (
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
-    if (
-      event.key === "Enter"
-    ) {
+    if (event.key === "Enter") {
       event.preventDefault();
       void handleEmailLogin();
     }
@@ -389,7 +513,9 @@ export default function Login() {
               </div>
 
               <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-                <Chrome size={19} />
+                <Chrome
+                  size={19}
+                />
 
                 <p className="mt-3 text-sm font-semibold">
                   Google
@@ -416,7 +542,9 @@ export default function Login() {
 
           <div className="w-full max-w-md">
 
-            {/* Mobile Brand */}
+            {/* =================================================
+                MOBILE BRAND
+            ================================================= */}
 
             <div className="mb-8 flex items-center justify-center lg:hidden">
 
@@ -443,7 +571,9 @@ export default function Login() {
 
             </div>
 
-            {/* Header */}
+            {/* =================================================
+                HEADER
+            ================================================= */}
 
             <div className="mb-8">
 
@@ -465,17 +595,17 @@ export default function Login() {
 
             </div>
 
-            {/* LOGIN CARD */}
+            {/* =================================================
+                LOGIN CARD
+            ================================================= */}
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 sm:p-6 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
 
               {/* =================================================
-                  EMAIL LOGIN
+                  EMAIL
               ================================================= */}
 
               <div className="space-y-5">
-
-                {/* Email */}
 
                 <div>
 
@@ -503,7 +633,7 @@ export default function Login() {
                       onKeyDown={
                         handleKeyDown
                       }
-                      placeholder="Enter your email address"
+                      placeholder="you@example.com"
                       autoComplete="email"
                       disabled={loading}
                       className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
@@ -513,7 +643,9 @@ export default function Login() {
 
                 </div>
 
-                {/* Password */}
+                {/* =================================================
+                    PASSWORD
+                ================================================= */}
 
                 <div>
 
@@ -553,9 +685,7 @@ export default function Login() {
                           ? "text"
                           : "password"
                       }
-                      value={
-                        password
-                      }
+                      value={password}
                       onChange={(
                         event
                       ) =>
@@ -604,7 +734,9 @@ export default function Login() {
 
                 </div>
 
-                {/* Remember */}
+                {/* =================================================
+                    REMEMBER EMAIL
+                ================================================= */}
 
                 <label className="flex cursor-pointer items-center gap-3">
 
@@ -629,7 +761,9 @@ export default function Login() {
 
                 </label>
 
-                {/* Sign in */}
+                {/* =================================================
+                    SIGN IN
+                ================================================= */}
 
                 <button
                   type="button"
@@ -645,7 +779,6 @@ export default function Login() {
                         size={18}
                         className="animate-spin"
                       />
-
                       Signing in...
                     </>
                   ) : (
@@ -664,7 +797,7 @@ export default function Login() {
                 <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
 
                 <span className="text-xs font-medium text-slate-400">
-                  OR CONTINUE WITH
+                  OR
                 </span>
 
                 <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
@@ -672,7 +805,7 @@ export default function Login() {
               </div>
 
               {/* =================================================
-                  GOOGLE LOGIN
+                  GOOGLE
               ================================================= */}
 
               <button
@@ -685,6 +818,7 @@ export default function Login() {
                 }
                 className="inline-flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
               >
+
                 {googleLoading ? (
                   <Loader2
                     size={18}
@@ -699,6 +833,7 @@ export default function Login() {
                 {googleLoading
                   ? "Connecting..."
                   : "Continue with Google"}
+
               </button>
 
               {/* =================================================
@@ -708,6 +843,7 @@ export default function Login() {
               <div className="mt-6 text-center">
 
                 <p className="text-sm text-slate-500 dark:text-slate-400">
+
                   Don't have an account?{" "}
 
                   <Link
@@ -716,11 +852,14 @@ export default function Login() {
                   >
                     Create account
                   </Link>
+
                 </p>
 
               </div>
 
-              {/* SECURITY */}
+              {/* =================================================
+                  SECURITY
+              ================================================= */}
 
               <div className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-slate-400 dark:text-slate-500">
 
@@ -735,7 +874,9 @@ export default function Login() {
 
             </div>
 
-            {/* Back home */}
+            {/* =================================================
+                BACK HOME
+            ================================================= */}
 
             <div className="mt-6 text-center">
 
