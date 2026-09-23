@@ -633,7 +633,7 @@ export default function Login() {
                       onKeyDown={
                         handleKeyDown
                       }
-                      placeholder="you@example.com"
+                      placeholder="Enter your email"
                       autoComplete="email"
                       disabled={loading}
                       className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
